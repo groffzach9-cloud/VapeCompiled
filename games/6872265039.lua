@@ -14,12 +14,6 @@ local vape = shared.vape
 local entitylib = vape.Libraries.entity
 local sessioninfo = vape.Libraries.sessioninfo
 local bedwars = {}
-
-local kickThread = task.spawn(lplr.Kick, lplr, 'Bedwars is no longer supported by Vape V4, thank you for 5 years of support ❤️')
-if coroutine.status(kickThread) ~= 'dead' then
-	game:Shutdown()
-end
-
 local function notif(...)
 	return vape:CreateNotification(...)
 end
