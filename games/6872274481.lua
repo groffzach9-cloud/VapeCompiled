@@ -24603,7 +24603,7 @@ end)
 run(function()
 	local Hitfix 
 
-    HitFix = vape.Categories.Legit:CreateModule({
+    HitFix = vape.Categories.Utility:CreateModule({
         Name = 'HitFix',
         Function = function(callback)
             local func = bedwars.SwordController.swingSwordAtMouse
