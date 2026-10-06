@@ -6703,6 +6703,7 @@ run(function()
 	local FaceTarget
 	local AirHit
 	local AirHitsChance
+	local HitTime
 	local FastHits
 	local LegitSwitch
 	local Kits
@@ -6999,7 +7000,7 @@ run(function()
 	end
 
 	local function getAttackDelay(spd, meta)
-		return spd * furyMultiplier(meta) * 0.9
+		return spd * furyMultiplier(meta) * HitTime.Value
 	end
 
 	local function fhWindowOpen(ent, meleeRange, cost)
@@ -8652,6 +8653,16 @@ run(function()
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
+	})
+
+	HitTime = Killaura:CreateSlider({
+		Name = 'Hit time',
+		Min = 0.5,
+		Max = 1.5,
+		Default = 0.9,
+		Decimal = 100,
+		Suffix = 'x',
+		Tooltip = 'Scales the sword hit interval. Lower values request faster hits.'
 	})
 
 	AngleSlider = Killaura:CreateSlider({
