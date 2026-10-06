@@ -904,15 +904,13 @@ function vape:LoadGUI()
 		Size = UDim2.fromOffset(14, 14)
 	})
 	vape:CreateCategory({
-		Name = 'Kits',
+		Name = 'Inventory',
 		Icon = getvapeasset('newvape/assets/new/inventory.png'),
 		Size = UDim2.fromOffset(15, 14)
 	})
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
-	
-
 	
 	--[[
 		Friends
@@ -1164,7 +1162,7 @@ function vape:LoadGUI()
 	guipane:CreateToggle({
 		Name = 'GUI bind indicator',
 		Default = true,
-		Tooltip = "Displays a message indicating your GUI upon injecting.\nI.E. 'Press RSHIFT to open GUI then slime niggas out'"
+		Tooltip = "Displays a message indicating your GUI upon injecting.\nI.E. 'Press RSHIFT to open GUI'"
 	})
 	
 	guipane:CreateToggle({
