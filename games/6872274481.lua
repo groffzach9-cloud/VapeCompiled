@@ -25668,7 +25668,7 @@ run(function()
 		task.wait(FakeLagSpeed5.Value / 10)
 		entitylib.character.Humanoid.WalkSpeed = FakeLagSpeed3.Value
 	end
-	FakeLag = vape.Categories.Blatent:CreateModule({
+	FakeLag = vape.Categories.Combat:CreateModule({
 		Name = "FakeLag",
         Tooltip = "Makes people think you're laggy",
 		Function = function(callback)
