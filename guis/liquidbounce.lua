@@ -2722,11 +2722,6 @@ mainapi:CreateCategory({
 	Icon = getcustomasset('newvape/assets/liquidbounce/minigames.png'),
 	Size = UDim2.fromOffset(15, 15)
 })
-mainapi:CreateCategory({
-    Name = 'LOL',
-    Icon = getcustomasset('newvape/assets/new/youricon.png'),
-    Size = UDim2.fromOffset(18, 18)
-})
 mainapi:Clean(inputService.InputBegan:Connect(function(inputObj)
 	if not inputService:GetFocusedTextBox() and inputObj.KeyCode ~= Enum.KeyCode.Unknown then
 		table.insert(mainapi.HeldKeybinds, inputObj.KeyCode.Name)
