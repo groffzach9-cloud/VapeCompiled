@@ -912,15 +912,12 @@ function vape:LoadGUI()
 		Text = 'misc'
 	})
 	vape:CreateCategory({
-		Name = 'exploits',
-		Icon = getvapeasset('newvape/assets/new/inventory.png'),
-		Size = UDim2.fromOffset(15, 14)
+		Name = 'Comballpt',
+		Icon = getvapeasset('newvape/assets/new/combat.png'),
+		Size = UDim2.fromOffset(13, 14)
 	})
-	vape:CreateCategory({
-		Name = 'Exploits',
-		Icon = getvapeasset('newvape/assets/new/utility.png'),
-		Size = UDim2.fromOffset(15, 14)
-	})
+
+	
 	--[[
 		Friends
 	]]
