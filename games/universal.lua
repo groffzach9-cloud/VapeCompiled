@@ -2359,6 +2359,24 @@ run(function()
 end)
 
 run(function()
+	local InfiniteJump
+
+	InfiniteJump = vape.Categories.Blatant:CreateModule({
+		Name = 'InfiniteJump',
+		Function = function(callback)
+			if callback then
+				InfiniteJump:Clean(inputService.JumpRequest:Connect(function()
+					if entitylib.isAlive then
+						entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+					end
+				end))
+			end
+		end,
+		Tooltip = 'Lets you jump repeatedly while in the air'
+	})
+end)
+
+run(function()
 	local HighJump
 	local Mode
 	local Value
