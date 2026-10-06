@@ -23448,6 +23448,82 @@ run(function()
 end)
 
 run(function()
+	local AutoGG
+	local Message
+	local OnKill
+	local OnBedBreak
+	local lastMessageAt = 0
+	local messageCooldown = 3
+
+	local function sendAutoGG()
+		local now = tick()
+		if now - lastMessageAt < messageCooldown then
+			return
+		end
+
+		local text = Message.Value
+		local ok, err = pcall(function()
+			if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+				local config = textChatService.ChatInputBarConfiguration
+				local channel = config and config.TargetTextChannel
+				if not channel then
+					error('No active text chat channel')
+				end
+				channel:SendAsync(text)
+			else
+				local chatEvents = replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents')
+				local sayRequest = chatEvents and chatEvents:FindFirstChild('SayMessageRequest')
+				if not sayRequest then
+					error('Legacy chat is unavailable')
+				end
+				sayRequest:FireServer(text, 'All')
+			end
+		end)
+		if not ok then
+			notif('AutoGG', 'Failed to send message: '..tostring(err), 6, 'alert')
+			return
+		end
+		lastMessageAt = now
+	end
+
+	AutoGG = vape.Categories.Minigames:CreateModule({
+		Name = 'AutoGG',
+		Tooltip = 'Sends a friendly message after a kill or bed break.',
+		Function = function(callback)
+			if callback then
+				AutoGG:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
+					if not OnKill.Enabled then return end
+					local killer = playersService:GetPlayerFromCharacter(deathTable.fromEntity)
+					local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
+					if killer == lplr and killed and killed ~= lplr then
+						sendAutoGG()
+					end
+				end))
+				AutoGG:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
+					if OnBedBreak.Enabled and bedTable.player == lplr then
+						sendAutoGG()
+					end
+				end))
+			end
+		end
+	})
+
+	Message = AutoGG:CreateDropdown({
+		Name = 'Message',
+		List = {'gg', 'Good game!', 'Well played!', 'Nice round!'},
+		Default = 'gg'
+	})
+	OnKill = AutoGG:CreateToggle({
+		Name = 'On kill',
+		Default = true
+	})
+	OnBedBreak = AutoGG:CreateToggle({
+		Name = 'On bed break',
+		Default = true
+	})
+end)
+
+run(function()
 	local AutoHonor
 	local Delay
 	local honoredusers = {}
