@@ -52,6 +52,9 @@ local assetService = cloneref(game:GetService('AssetService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local stats = cloneref(game:GetService('Stats'))
 
+local isnetworkowner = identifyexecutor and table.find({'AWP', 'Nihon'}, ({identifyexecutor()})[1]) and isnetworkowner or function()
+	return true
+end
 local gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA('Camera')
 local lplr = playersService.LocalPlayer
 
@@ -937,8 +940,6 @@ run(function()
 	local CircleFilled
 	local CircleObject
 	local RightClick
-	local KeyToggle
-	local Key
 	local ShowTarget
 	local moveConst = Vector2.new(1, 0.77) * math.rad(0.5)
 	
@@ -957,25 +958,15 @@ run(function()
 			end
 	
 			if callback then
-				local entity
-				local rightClicked = inputService:IsMouseButtonPressed(1)
-				local pressed = false
-	
+				local ent
+				local rightClicked = not RightClick.Enabled or inputService:IsMouseButtonPressed(1)
 				AimAssist:Clean(runService.RenderStepped:Connect(function(dt)
 					if CircleObject then
 						CircleObject.Position = inputService:GetMouseLocation()
 					end
 	
-					if not vape.gui.ScaledGui.ClickGui.Visible and inputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
-						if RightClick.Enabled and not rightClicked then
-							return
-						end
-	
-						if KeyToggle.Enabled and not pressed then
-							return
-						end
-	
-						entity = entitylib.EntityMouse({
+					if rightClicked and not vape.gui.ScaledGui.ClickGui.Visible then
+						ent = entitylib.EntityMouse({
 							Range = FOV.Value,
 							Part = Part.Value,
 							Players = Targets.Players.Enabled,
@@ -984,13 +975,13 @@ run(function()
 							Origin = gameCamera.CFrame.Position
 						})
 	
-						if entity then
+						if ent then
 							local facing = gameCamera.CFrame.LookVector
-							local new = (entity[Part.Value].Position - gameCamera.CFrame.Position).Unit
+							local new = (ent[Part.Value].Position - gameCamera.CFrame.Position).Unit
 							new = new == new and new or Vector3.zero
 	
 							if ShowTarget.Enabled then
-								targetinfo.Targets[entity] = tick() + 1
+								targetinfo.Targets[ent] = tick() + 1
 							end
 	
 							if new ~= Vector3.zero then
@@ -1005,21 +996,20 @@ run(function()
 					end
 				end))
 	
-				AimAssist:Clean(Key.Triggered:Connect(function(isDown)
-					pressed = KeyToggle.Enabled and isDown
-				end))
+				if RightClick.Enabled then
+					AimAssist:Clean(inputService.InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton2 then
+							ent = nil
+							rightClicked = true
+						end
+					end))
 	
-				AimAssist:Clean(inputService.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton2 then
-						rightClicked = true
-					end
-				end))
-	
-				AimAssist:Clean(inputService.InputEnded:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton2 then
-						rightClicked = false
-					end
-				end))
+					AimAssist:Clean(inputService.InputEnded:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton2 then
+							rightClicked = false
+						end
+					end))
+				end
 			end
 		end,
 		Tooltip = 'Smoothly aims to closest valid target'
@@ -1105,21 +1095,12 @@ run(function()
 	})
 	RightClick = AimAssist:CreateToggle({
 		Name = 'Require right click',
-		Tooltip = 'Only activate when holding down right click'
-	})
-	KeyToggle = AimAssist:CreateToggle({
-		Name = 'Require key',
-		Function = function(callback)
-			Key.Object.Visible = callback
-		end,
-		Tooltip = 'Only activate when holding down a certain key'
-	})
-	Key = AimAssist:CreateBind({
-		Name = 'Hold Key',
-		Default = {'G'},
-		Hold = true,
-		Darker = true,
-		Visible = false
+		Function = function()
+			if AimAssist.Enabled then
+				AimAssist:Toggle()
+				AimAssist:Toggle()
+			end
+		end
 	})
 	ShowTarget = AimAssist:CreateToggle({
 		Name = 'Show target info'
@@ -2059,12 +2040,12 @@ run(function()
 				end
 			end
 
-			root.AssemblyLinearVelocity *= Vector3.new(1, 0, 1)
+			root.Velocity *= Vector3.new(1, 0, 1)
 			root.CFrame += Vector3.new(0, YLevel - root.Position.Y, 0)
 		end,
 		Bounce = function()
 			Functions.Velocity()
-			entitylib.character.RootPart.AssemblyLinearVelocity += Vector3.new(0, ((os.clock() % BounceDelay.Value) / BounceDelay.Value > 0.5 and 1 or -1) * BounceLength.Value, 0)
+			entitylib.character.RootPart.Velocity += Vector3.new(0, ((os.clock() % BounceDelay.Value) / BounceDelay.Value > 0.5 and 1 or -1) * BounceLength.Value, 0)
 		end,
 		Floor = function()
 			Platform.CFrame = down ~= 0 and CFrame.identity or entitylib.character.RootPart.CFrame + Vector3.new(0, -(entitylib.character.HipHeight + 0.5), 0)
@@ -2394,7 +2375,7 @@ run(function()
 				root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, Value.Value, root.AssemblyLinearVelocity.Z)
 			elseif Mode.Value == 'Impulse' then
 				entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-				runService.Heartbeat:Once(function()
+				task.delay(0, function()
 					root:ApplyImpulse(Vector3.new(0, Value.Value - root.AssemblyLinearVelocity.Y, 0) * root.AssemblyMass)
 				end)
 			else
@@ -2600,6 +2581,7 @@ run(function()
 				Platform.Anchored = true
 				Platform.Size = Vector3.new(3, 1, 3)
 				Platform.Transparency = 1
+				Platform.Parent = gameCamera
 	
 				Jesus:Clean(Platform)
 				Jesus:Clean(runService.PreSimulation:Connect(function()
@@ -2609,9 +2591,8 @@ run(function()
 	
 						if ray and ray.Material == Enum.Material.Water then
 							Platform.CFrame = CFrame.new(ray.Position)
-							Platform.Parent = workspace
 						else
-							Platform.Parent = nil
+							Platform.CFrame = CFrame.new(10000, 10000, 10000)
 						end
 					end
 				end))
@@ -3126,6 +3107,7 @@ run(function()
 	local rayCheck = RaycastParams.new()
 	rayCheck.RespectCanCollide = true
 	local overlapCheck = OverlapParams.new()
+	overlapCheck.MaxParts = 9e9
 	local modified, fflag = {}
 	local teleported
 	
@@ -3166,8 +3148,8 @@ run(function()
 			end
 		end,
 		Character = function()
-			for _, part in lplr.Character:QueryDescendants('BasePart') do
-				if part.CanCollide and (not Spider.Enabled or SpiderShift) then
+			for _, part in lplr.Character:GetDescendants() do
+				if part:IsA('BasePart') and part.CanCollide and (not Spider.Enabled or SpiderShift) then
 					modified[part] = true
 					part.CanCollide = Spider.Enabled and not SpiderShift
 				end
@@ -5852,10 +5834,10 @@ run(function()
 		Position = UDim2.fromOffset(12, 14),
 		Function = function(callback)
 			if callback then
-				local teleported
+				local teleportedServers
 				SessionInfo:Clean(playersService.LocalPlayer.OnTeleport:Connect(function()
-					if not teleported then
-						teleported = true
+					if not teleportedServers then
+						teleportedServers = true
 						queue_on_teleport("shared.vapesessioninfo = '"..httpService:JSONEncode(vape.Libraries.sessioninfo.Objects).."'")
 					end
 				end))
@@ -5884,7 +5866,6 @@ run(function()
 							repeat
 								local oldkey = key
 								key, val = next(stuff, key)
-	
 								if val == false then
 									table.remove(stuff, key)
 									key = oldkey
@@ -5899,7 +5880,6 @@ run(function()
 						if not Title.Enabled then
 							table.remove(stuff, 1)
 						end
-	
 						infolabel.Text = table.concat(stuff, '\n')
 						infolabel.FontFace = FontOption.Value
 						infolabel.TextSize = TextSize.Value
@@ -7002,10 +6982,10 @@ run(function()
 	local track, anim
 	
 	local function playAnimation(char)
-		local oldTrack = track
-		if oldTrack then
+		local animcheck = track
+		if animcheck then
 			track = nil
-			oldTrack:Stop()
+			animcheck:Stop()
 		end
 	
 		local success, result = pcall(function()
@@ -7013,13 +6993,13 @@ run(function()
 		end)
 	
 		if success then
-			local comp = track
+			local currentanim = track
 			track.Priority = Enum.AnimationPriority[Priority.Value]
 			track:Play()
 			track:AdjustSpeed(Speed.Value)
 	
 			AnimationPlayer:Clean(track.Stopped:Connect(function()
-				if comp == track then
+				if currentanim == track then
 					track:Play()
 				end
 			end))
@@ -7037,12 +7017,7 @@ run(function()
 						return
 					end
 	
-					local info = marketplaceService:GetProductInfo(tonumber(IDBox.Value))
-					if not info or info.AssetTypeId ~= 24 then
-						return string.match(game:GetObjects('rbxassetid://'..IDBox.Value)[1].AnimationId, '%?id=(%d+)')
-					else
-						return IDBox.Value
-					end
+					return string.match(game:GetObjects('rbxassetid://'..IDBox.Value)[1].AnimationId, '%?id=(%d+)')
 				end)
 	
 				anim = Instance.new('Animation')
@@ -7325,7 +7300,7 @@ run(function()
 	local function LocalAdded(char)
 		for _, prop in {'CFrame', 'Velocity'} do
 			for _, connection in getconnections(char.RootPart:GetPropertyChangedSignal(prop)) do
-				connection:Disable()
+				hookfunction(connection.Function, function() end)
 			end
 		end
 	end
@@ -7469,32 +7444,25 @@ run(function()
 	local Role
 	
 	local function getRole(plr, id)
-		local success, role
+		local suc, res
 		for _ = 1, 3 do
-			success, role = pcall(function()
+			suc, res = pcall(function()
 				return plr:GetRankInGroup(id)
 			end)
-	
-			if success then
-				break
-			end
+			if suc then break end
 		end
-	
-		return success and role or 0
+		return suc and res or 0
 	end
 	
 	local function getLowestStaffRole(roles)
-		local modRole = math.huge
-	
-		for _, role in roles do
-			local name = role.Name:lower()
-	
-			if (name:find('admin') or name:find('mod') or name:find('dev')) and role.Rank < modRole then
-				modRole = role.Rank
+		local highest = math.huge
+		for _, v in roles do
+			local low = v.Name:lower()
+			if (low:find('admin') or low:find('mod') or low:find('dev')) and v.Rank < highest then
+				highest = v.Rank
 			end
 		end
-	
-		return modRole
+		return highest
 	end
 	
 	local function playerAdded(plr)
@@ -7587,9 +7555,9 @@ run(function()
 	Mode = StaffDetector:CreateDropdown({
 		Name = 'Mode',
 		List = {'Uninject', 'ServerHop', 'Profile', 'AutoConfig', 'Notify'},
-		Function = function(value)
+		Function = function(val)
 			if Profile.Object then
-				Profile.Object.Visible = value == 'Profile'
+				Profile.Object.Visible = val == 'Profile'
 			end
 		end
 	})
@@ -7619,12 +7587,16 @@ run(function()
 	vape.Categories.World:CreateModule({
 		Name = 'Anti-AFK',
 		Function = function(callback)
-			for _, connection in getconnections(lplr.Idled) do
-				if callback then
+			if callback then
+				for _, connection in getconnections(lplr.Idled) do
+					table.insert(connections, connection)
 					connection:Disable()
-				else
+				end
+			else
+				for _, connection in connections do
 					connection:Enable()
 				end
+				table.clear(connections)
 			end
 		end,
 		Tooltip = 'Lets you stay ingame without getting kicked'
@@ -7739,23 +7711,17 @@ run(function()
 					Freecam:Clean(function()
 						fcScript:SetAttribute('FreecamEnabled', false)
 					end)
-	
 					return
 				end
 	
 				repeat
+					task.wait(0.1)
+	
 					for _, connection in getconnections(gameCamera:GetPropertyChangedSignal('CameraType')) do
 						if connection.Function then
 							module = debug.getupvalue(connection.Function, 1)
-							break
 						end
 					end
-	
-					if module or not Freecam.Enabled then
-						break
-					end
-	
-					task.wait(0.1)
 				until module or not Freecam.Enabled
 	
 				if module and module.activeCameraController and Freecam.Enabled then
@@ -8027,13 +7993,13 @@ run(function()
 					if entitylib.isAlive then
 						rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
 						local root = entitylib.character.RootPart
-						local newPos = root.Position + vec
-						local ray = workspace:Raycast(newPos, Vector3.new(0, -15, 0), rayCheck)
+						local movedir = root.Position + vec
+						local ray = workspace:Raycast(movedir, Vector3.new(0, -15, 0), rayCheck)
 	
 						if not ray then
 							local check = workspace:Blockcast(root.CFrame, Vector3.new(3, 1, 3), Vector3.new(0, -(entitylib.character.HipHeight + 1), 0), rayCheck)
 							if check then
-								vec = (check.Instance:GetClosestPointOnSurface(newPos) - root.Position) * Vector3.new(1, 0, 1)
+								vec = (check.Instance:GetClosestPointOnSurface(movedir) - root.Position) * Vector3.new(1, 0, 1)
 							end
 						end
 					end
@@ -8053,10 +8019,8 @@ end)
 run(function()
 	local Wallhop
 	local Offset
-	local FPSCap
 	local params = OverlapParams.new()
 	params.RespectCanCollide = true
-	local oldfps
 	local oldvec
 	local timeout = os.clock()
 	local set
@@ -8101,22 +8065,12 @@ run(function()
 		Name = 'Wallhop',
 		Function = function(callback)
 			if callback then
-				if FPSCap.Enabled then
-					oldfps = getfpscap()
-					setfpscap(60)
-				end
-	
 				if workspace.AuthorityMode == Enum.AuthorityMode.Server then
 					Wallhop:Clean(runService:BindToSimulation(doCheck))
 				else
 					Wallhop:Clean(runService.RenderStepped:Connect(doCheck))
 				end
 			else
-				if oldfps then
-					setfpscap(oldfps)
-					oldfps = nil
-				end
-	
 				set = nil
 			end
 		end,
@@ -8128,16 +8082,6 @@ run(function()
 		Max = 45,
 		Default = 45,
 		Suffix = 'degrees'
-	})
-	FPSCap = Wallhop:CreateToggle({
-		Name = 'FPS Cap',
-		Function = function(callback)
-			if Wallhop.Enabled then
-				Wallhop:Toggle()
-				Wallhop:Toggle()
-			end
-		end,
-		Tootip = 'Set the FPS to 60 while the module is enabled.'
 	})
 end)
 
@@ -8165,7 +8109,6 @@ run(function()
 				for part in modified do
 					part.LocalTransparencyModifier = 0
 				end
-	
 				table.clear(modified)
 			end
 		end,
@@ -8630,7 +8573,7 @@ run(function()
 	Clock:CreateColorSlider({
 		Name = 'Color',
 		DefaultValue = 0,
-		DefaultOpacity = 0.4,
+		DefaultOpacity = 0.5,
 		Function = function(hue, sat, val, opacity)
 			label.BackgroundColor3 = Color3.fromHSV(hue, sat, val)
 			label.BackgroundTransparency = 1 - opacity
@@ -8641,7 +8584,7 @@ run(function()
 	})
 	label = Instance.new('TextLabel')
 	label.Size = UDim2.new(0, 100, 0, 41)
-	label.BackgroundTransparency = 0.6
+	label.BackgroundTransparency = 0.5
 	label.TextSize = 15
 	label.Font = Enum.Font.Gotham
 	label.Text = '0:00 PM'
@@ -8868,7 +8811,7 @@ run(function()
 	FPS:CreateColorSlider({
 		Name = 'Color',
 		DefaultValue = 0,
-		DefaultOpacity = 0.4,
+		DefaultOpacity = 0.5,
 		Function = function(hue, sat, val, opacity)
 			label.BackgroundColor3 = Color3.fromHSV(hue, sat, val)
 			label.BackgroundTransparency = 1 - opacity
@@ -8876,7 +8819,7 @@ run(function()
 	})
 	label = Instance.new('TextLabel')
 	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundTransparency = 0.6
+	label.BackgroundTransparency = 0.5
 	label.TextSize = 15
 	label.Font = Enum.Font.Gotham
 	label.Text = 'inf FPS'
@@ -8938,11 +8881,11 @@ run(function()
 	
 			local pressed = inputType.UserInputState == Enum.UserInputState.Begin
 			key.Pressed = pressed
-			key.Tween = tweenService:Create(key.Key, TweenInfo.new(0.05, Enum.EasingStyle.Linear), {
+			key.Tween = tweenService:Create(key.Key, TweenInfo.new(0.1), {
 				BackgroundColor3 = pressed and Color3.new(1, 1, 1) or Color3.fromHSV(Color.Hue, Color.Sat, Color.Value),
 				BackgroundTransparency = pressed and 0 or 1 - Color.Opacity
 			})
-			key.Tween2 = tweenService:Create(key.Key.TextLabel, TweenInfo.new(0.05, Enum.EasingStyle.Linear), {
+			key.Tween2 = tweenService:Create(key.Key.TextLabel, TweenInfo.new(0.1), {
 				TextColor3 = pressed and Color3.new() or Color3.new(1, 1, 1)
 			})
 			key.Tween:Play()
@@ -8983,7 +8926,7 @@ run(function()
 	Color = Keystrokes:CreateColorSlider({
 		Name = 'Color',
 		DefaultValue = 0,
-		DefaultOpacity = 0.4,
+		DefaultOpacity = 0.5,
 		Function = function(hue, sat, val, opacity)
 			for _, v in keys do
 				if not v.Pressed then
@@ -9036,7 +8979,7 @@ run(function()
 	Memory:CreateColorSlider({
 		Name = 'Color',
 		DefaultValue = 0,
-		DefaultOpacity = 0.4,
+		DefaultOpacity = 0.5,
 		Function = function(hue, sat, val, opacity)
 			label.BackgroundColor3 = Color3.fromHSV(hue, sat, val)
 			label.BackgroundTransparency = 1 - opacity
@@ -9044,7 +8987,7 @@ run(function()
 	})
 	label = Instance.new('TextLabel')
 	label.Size = UDim2.new(0, 100, 0, 41)
-	label.BackgroundTransparency = 0.6
+	label.BackgroundTransparency = 0.5
 	label.TextSize = 15
 	label.Font = Enum.Font.Gotham
 	label.Text = '0 MB'
@@ -9085,7 +9028,7 @@ run(function()
 	Ping:CreateColorSlider({
 		Name = 'Color',
 		DefaultValue = 0,
-		DefaultOpacity = 0.4,
+		DefaultOpacity = 0.5,
 		Function = function(hue, sat, val, opacity)
 			label.BackgroundColor3 = Color3.fromHSV(hue, sat, val)
 			label.BackgroundTransparency = 1 - opacity
@@ -9097,7 +9040,7 @@ run(function()
 	})
 	label = Instance.new('TextLabel')
 	label.Size = UDim2.new(0, 100, 0, 41)
-	label.BackgroundTransparency = 0.6
+	label.BackgroundTransparency = 0.5
 	label.TextSize = 15
 	label.Font = Enum.Font.Gotham
 	label.Text = '0 ms'
@@ -9272,7 +9215,7 @@ run(function()
 	Speedmeter:CreateColorSlider({
 		Name = 'Color',
 		DefaultValue = 0,
-		DefaultOpacity = 0.4,
+		DefaultOpacity = 0.5,
 		Function = function(hue, sat, val, opacity)
 			label.BackgroundColor3 = Color3.fromHSV(hue, sat, val)
 			label.BackgroundTransparency = 1 - opacity
@@ -9280,7 +9223,7 @@ run(function()
 	})
 	label = Instance.new('TextLabel')
 	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundTransparency = 0.6
+	label.BackgroundTransparency = 0.5
 	label.TextSize = 15
 	label.Font = Enum.Font.Gotham
 	label.Text = '0 sps'
