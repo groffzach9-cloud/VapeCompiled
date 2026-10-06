@@ -25002,17 +25002,20 @@ run(function()
     local TP
 
     local JumpVelocity = 50 -- fixed jump strength
-    local tpTick = tick()
+    local tpTick = 0
     local oldy
     local rayCheck = RaycastParams.new()
     rayCheck.RespectCanCollide = true
+    local lastGroundTime = tick()
+    local tpToggle = true
 
     InfiniteJump = vape.Categories.Blatant:CreateModule({
         Name = "InfiniteJump",
         Tooltip = "Infinite jump + TP Down",
         Function = function(callback)
             if callback then
-                tpTick = tick()
+                lastGroundTime = tick()
+                tpToggle = true
                 oldy = nil
 
                 -- KEYBOARD SUPPORT
@@ -25063,62 +25066,70 @@ run(function()
 
                 -- TP DOWN LOGIC (copied from Fly style)
                 InfiniteJump:Clean(runService.PreSimulation:Connect(function()
-                    if entitylib.isAlive and lplr.Character and lplr.Character.PrimaryPart then
-                        local root = lplr.Character.PrimaryPart
+                    if not entitylib.isAlive or not lplr.Character then
+                        oldy = nil
+                        tpToggle = true
+                        lastGroundTime = tick()
+                        return
+                    end
 
-                        rayCheck.FilterDescendantsInstances = {
-                            lplr.Character,
-                            gameCamera,
-                            AntiFallPart
-                        }
+                    local root = entitylib.character and entitylib.character.RootPart
+                    local humanoid = entitylib.character and entitylib.character.Humanoid
+                    if not root or not humanoid then
+                        return
+                    end
+
+                    local now = tick()
+                    local grounded = humanoid.FloorMaterial ~= Enum.Material.Air
+                    if grounded then
+                        lastGroundTime = now
+                        if not oldy then
+                            tpToggle = true
+                            return
+                        end
+                    end
+
+                    if oldy then
+                        if tpTick < now then
+                            root.CFrame = CFrame.lookAlong(
+                                Vector3.new(root.Position.X, oldy, root.Position.Z),
+                                root.CFrame.LookVector
+                            )
+                            oldy = nil
+                            tpToggle = true
+                        end
+                        return
+                    end
+
+                    if grounded then
+                        return
+                    end
+
+                    if TP.Enabled and tpToggle and now - lastGroundTime > 2 then
+                        rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera, AntiFallPart}
                         rayCheck.CollisionGroup = root.CollisionGroup
-
-                        if TP.Enabled then
-                            local airleft = (tick() - entitylib.character.AirTime)
-
-                            if airleft > 2 then
-                                if not oldy then
-                                    local ray = workspace:Raycast(
-                                        root.Position,
-                                        Vector3.new(0, -1000, 0),
-                                        rayCheck
-                                    )
-
-                                    if ray then
-                                        oldy = root.Position.Y
-                                        tpTick = tick() + 0.11
-
-                                        root.CFrame = CFrame.lookAlong(
-                                            Vector3.new(
-                                                root.Position.X,
-                                                ray.Position.Y + entitylib.character.HipHeight,
-                                                root.Position.Z
-                                            ),
-                                            root.CFrame.LookVector
-                                        )
-                                    end
-                                end
-                            end
-
-                            if oldy then
-                                if tpTick < tick() then
-                                    local newpos = Vector3.new(
-                                        root.Position.X,
-                                        oldy,
-                                        root.Position.Z
-                                    )
-
-                                    root.CFrame = CFrame.lookAlong(
-                                        newpos,
-                                        root.CFrame.LookVector
-                                    )
-
-                                    oldy = nil
-                                end
-                            end
+                        local ray = workspace:Raycast(root.Position, Vector3.new(0, -1000, 0), rayCheck)
+                        if ray then
+                            oldy = root.Position.Y
+                            tpToggle = false
+                            tpTick = now + 0.11
+                            root.CFrame = CFrame.lookAlong(
+                                Vector3.new(root.Position.X, ray.Position.Y + humanoid.HipHeight, root.Position.Z),
+                                root.CFrame.LookVector
+                            )
                         end
                     end
                 end))
+            else
+                if oldy and entitylib.isAlive and entitylib.character and entitylib.character.RootPart then
+                    local root = entitylib.character.RootPart
+                    root.CFrame = CFrame.lookAlong(
+                        Vector3.new(root.Position.X, oldy, root.Position.Z),
+                        root.CFrame.LookVector
+                    )
+                end
+                oldy = nil
+                tpToggle = true
             end
         end
     })
