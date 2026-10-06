@@ -1965,7 +1965,7 @@ run(function()
 	end)
 end)
 
-for _, v in {'AntiRagdoll', 'TriggerBot', 'SilentAim', 'AutoRejoin', 'Rejoin', 'Disabler', 'Timer', 'ServerHop', 'MouseTP', 'MurderMystery', 'NameTags', 'Killaura', 'AimAssist', 'AutoClicker', 'Reach', 'AntiFall', 'Fly', 'HitBoxes', 'LongJump', 'Speed', 'Swim', 'PlayerModel', 'Search', 'Waypoints', 'Blink', 'StaffDetector', 'Scary Skybox', 'FastProxPrompt', 'SafeWalk', 'Wallhop', ''} do
+for _, v in {'AntiRagdoll', 'TriggerBot', 'SilentAim', 'AutoRejoin', 'Rejoin', 'Disabler', 'Timer', 'ServerHop', 'MouseTP', 'MurderMystery', 'NameTags', 'Killaura', 'AimAssist', 'AutoClicker', 'Reach', 'AntiFall', 'Fly', 'HitBoxes', 'LongJump', 'Speed', 'Swim', 'PlayerModel', 'Search', 'Waypoints', 'Blink', 'StaffDetector', ''} do
 	vape:Remove(v)
 end
 
@@ -25273,6 +25273,10 @@ run(function()
 	end
 end)
 
-for _, v in {'PlayerAttach', 'silentaim ', 'BlockCPSRemover', 'DamageTexts', 'StaffHUD', 'NetworkTP', 'ShadowRemover', 'PhaseMine'} do
-	vape:Remove(v)
+for _, name in {'PlayerAttach', 'silentaim ', 'BlockCPSRemover', 'DamageTexts', 'StaffHUD', 'NetworkTP', 'ShadowRemover', 'PhaseMine', 'Scary Skybox', 'FastProxPrompt', 'SafeWalk', 'Wallhop', 'Freecam', 'Parkour', 'PotatoMode', 'Protect', 'RemoveNeon', 'Xray'} do
+	local module = vape.Modules[name]
+	if module and module.Enabled then
+		module:Toggle()
+	end
+	vape:Remove(name)
 end
