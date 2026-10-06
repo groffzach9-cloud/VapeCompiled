@@ -8340,16 +8340,23 @@ run(function()
 		end)
 	end
 
-	local function hitTarget(target, sword, selfPos)
+	local function hitTarget(target, sword)
 		local tchar = target.Character
-		if not tchar or not tchar.Parent then
+		local root = entitylib.character and entitylib.character.RootPart
+		local targetRoot = target.RootPart
+		if not tchar or not tchar.Parent or not root or not targetRoot or not targetRoot.Parent then
 			return false
 		end
 
-		local targetPos = tchar:GetPivot().Position
+		local selfPos = root.Position
+		local targetPos = targetRoot.Position
 		local delta = targetPos - selfPos
 		local distance = delta.Magnitude
-		local direction = distance > 0.001 and delta.Unit or entitylib.character.RootPart.CFrame.LookVector
+		if distance > AttackRange.Value then
+			return false
+		end
+
+		local direction = distance > 0.001 and delta.Unit or root.CFrame.LookVector
 		local realReach = math.max(getReach(sword.tool) - 0.001, 0)
 		local validationPos = selfPos
 		if distance > realReach then
@@ -8360,10 +8367,6 @@ run(function()
 		if not remote then
 			return false
 		end
-
-		bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
-		store.attackReach = math.floor(distance * 100) / 100
-		store.attackReachUpdate = tick() + 1
 
 		local ok = pcall(function()
 			remote:SendToServer({
@@ -8376,6 +8379,12 @@ run(function()
 				}
 			})
 		end)
+
+		if ok then
+			bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
+			store.attackReach = math.floor(distance * 100) / 100
+			store.attackReachUpdate = tick() + 1
+		end
 
 		return ok
 	end
@@ -8478,7 +8487,7 @@ run(function()
 					local ready = now >= kaNextSend and now - (bedwars.SwordController.lastAttack or 0) >= delay
 					if ready and first and handReady(sword) then
 						if hitCandidate then
-							if airHitAllowed(hitCandidate) and hitTarget(hitCandidate, sword, selfPos) then
+							if airHitAllowed(hitCandidate) and hitTarget(hitCandidate, sword) then
 								kaLastSend = tick()
 								kaNextSend = now + delay
 								nextSwingMiss = kaNextSend
