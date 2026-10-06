@@ -2723,7 +2723,7 @@ mainapi:CreateCategory({
 	Size = UDim2.fromOffset(15, 15)
 })
 mainapi:CreateCategory({
-    Name = 'Category Name',
+    Name = 'LOL',
     Icon = getcustomasset('newvape/assets/new/youricon.png'),
     Size = UDim2.fromOffset(18, 18)
 })
