@@ -23449,19 +23449,21 @@ end)
 
 run(function()
 	local AutoGG
-	local Message
+	local KillMessage
+	local FinalKillMessage
+	local BedBreakMessage
 	local OnKill
+	local OnFinalKill
 	local OnBedBreak
 	local lastMessageAt = 0
 	local messageCooldown = 3
 
-	local function sendAutoGG()
+	local function sendAutoGG(message)
 		local now = tick()
 		if now - lastMessageAt < messageCooldown then
 			return
 		end
 
-		local text = Message.Value
 		local ok, err = pcall(function()
 			if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 				local config = textChatService.ChatInputBarConfiguration
@@ -23469,14 +23471,14 @@ run(function()
 				if not channel then
 					error('No active text chat channel')
 				end
-				channel:SendAsync(text)
+				channel:SendAsync(message)
 			else
 				local chatEvents = replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents')
 				local sayRequest = chatEvents and chatEvents:FindFirstChild('SayMessageRequest')
 				if not sayRequest then
 					error('Legacy chat is unavailable')
 				end
-				sayRequest:FireServer(text, 'All')
+				sayRequest:FireServer(message, 'All')
 			end
 		end)
 		if not ok then
@@ -23492,29 +23494,49 @@ run(function()
 		Function = function(callback)
 			if callback then
 				AutoGG:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
-					if not OnKill.Enabled then return end
 					local killer = playersService:GetPlayerFromCharacter(deathTable.fromEntity)
 					local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
 					if killer == lplr and killed and killed ~= lplr then
-						sendAutoGG()
+						if deathTable.finalKill then
+							if OnFinalKill.Enabled then
+								sendAutoGG(FinalKillMessage.Value)
+							end
+						elseif OnKill.Enabled then
+							sendAutoGG(KillMessage.Value)
+						end
 					end
 				end))
 				AutoGG:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
 					if OnBedBreak.Enabled and bedTable.player == lplr then
-						sendAutoGG()
+						sendAutoGG(BedBreakMessage.Value)
 					end
 				end))
 			end
 		end
 	})
 
-	Message = AutoGG:CreateDropdown({
-		Name = 'Message',
-		List = {'gg', 'Good game!', 'Well played!', 'Nice round!'},
+	local messages = {'gg', 'Good game!', 'Well played!', 'Nice round!'}
+	KillMessage = AutoGG:CreateDropdown({
+		Name = 'Kill message',
+		List = messages,
 		Default = 'gg'
+	})
+	FinalKillMessage = AutoGG:CreateDropdown({
+		Name = 'Final kill message',
+		List = messages,
+		Default = 'Good game!'
+	})
+	BedBreakMessage = AutoGG:CreateDropdown({
+		Name = 'Bed break message',
+		List = messages,
+		Default = 'Well played!'
 	})
 	OnKill = AutoGG:CreateToggle({
 		Name = 'On kill',
+		Default = true
+	})
+	OnFinalKill = AutoGG:CreateToggle({
+		Name = 'On final kill',
 		Default = true
 	})
 	OnBedBreak = AutoGG:CreateToggle({
