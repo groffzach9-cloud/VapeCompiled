@@ -8072,8 +8072,7 @@ run(function()
 				originalLighting = {
 					ClockTime = lightingService.ClockTime,
 					Ambient = lightingService.Ambient,
-					OutdoorAmbient = lightingService.OutdoorAmbient,
-					ExposureCompensation = lightingService.ExposureCompensation
+					OutdoorAmbient = lightingService.OutdoorAmbient
 				}
 
 				for _, object in lightingService:GetChildren() do
@@ -8084,25 +8083,23 @@ run(function()
 				end
 
 				sky = Instance.new('Sky')
-				sky.SkyboxBk = 'rbxassetid://15008458624'
-				sky.SkyboxFt = 'rbxassetid://15008458905'
-				sky.SkyboxLf = 'rbxassetid://15008459314'
-				sky.SkyboxRt = 'rbxassetid://15008459643'
-				sky.SkyboxDn = 'rbxassetid://15008458151'
-				sky.SkyboxUp = 'rbxassetid://15008458420'
+				sky.SkyboxBk = 'rbxassetid://149677024'
+				sky.SkyboxFt = 'rbxassetid://149677048'
+				sky.SkyboxLf = 'rbxassetid://149677063'
+				sky.SkyboxRt = 'rbxassetid://149677071'
+				sky.SkyboxDn = 'rbxassetid://149677033'
+				sky.SkyboxUp = 'rbxassetid://149677087'
 				sky.Parent = lightingService
 
 				colorCorrection = Instance.new('ColorCorrectionEffect')
-				colorCorrection.TintColor = Color3.fromRGB(255, 225, 205)
-				colorCorrection.Brightness = 0.08
-				colorCorrection.Contrast = 0.02
-				colorCorrection.Saturation = -0.05
+				colorCorrection.TintColor = Color3.fromRGB(255, 205, 180)
+				colorCorrection.Contrast = 0.08
+				colorCorrection.Saturation = -0.12
 				colorCorrection.Parent = lightingService
 
-				lightingService.ClockTime = 19
-				lightingService.Ambient = Color3.fromRGB(105, 76, 100)
-				lightingService.OutdoorAmbient = Color3.fromRGB(78, 72, 105)
-				lightingService.ExposureCompensation = 0.5
+				lightingService.ClockTime = 0.5
+				lightingService.Ambient = Color3.fromRGB(65, 38, 56)
+				lightingService.OutdoorAmbient = Color3.fromRGB(35, 37, 62)
 			else
 				if sky then
 					sky:Destroy()
@@ -8126,7 +8123,7 @@ run(function()
 				end
 			end
 		end,
-		Tooltip = 'Applies a moonlit Halloween skybox and brighter lighting.'
+		Tooltip = 'Applies a dark Halloween skybox and lighting.'
 	})
 end)
 
@@ -8391,36 +8388,6 @@ run(function()
 	local Cape
 	local Texture
 	local part, motor
-	local capesurfaces = {}
-
-	local function addCapeSurface(face)
-		local capesurface = Instance.new('SurfaceGui')
-		capesurface.Face = face
-		capesurface.AlwaysOnTop = true
-		capesurface.LightInfluence = 0
-		capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-		capesurface.PixelsPerStud = 50
-		capesurface.Adornee = part
-		capesurface.Parent = part
-
-		if Texture.Value:find('.webm') then
-			local decal = Instance.new('VideoFrame')
-			decal.Video = getcustomasset(Texture.Value)
-			decal.Size = UDim2.fromScale(1, 1)
-			decal.BackgroundTransparency = 1
-			decal.Looped = true
-			decal.Parent = capesurface
-			decal:Play()
-		else
-			local decal = Instance.new('ImageLabel')
-			decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://10743809431'
-			decal.Size = UDim2.fromScale(1, 1)
-			decal.BackgroundTransparency = 1
-			decal.Parent = capesurface
-		end
-
-		table.insert(capesurfaces, capesurface)
-	end
 	
 	local function createMotor(char)
 		if motor then
@@ -8451,8 +8418,26 @@ run(function()
 				part.Color = Color3.new()
 				part.CastShadow = false
 				part.Parent = gameCamera
-				addCapeSurface(Enum.NormalId.Front)
-				addCapeSurface(Enum.NormalId.Back)
+				local capesurface = Instance.new('SurfaceGui')
+				capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+				capesurface.Adornee = part
+				capesurface.Parent = part
+
+				if Texture.Value:find('.webm') then
+					local decal = Instance.new('VideoFrame')
+					decal.Video = getcustomasset(Texture.Value)
+					decal.Size = UDim2.fromScale(1, 1)
+					decal.BackgroundTransparency = 1
+					decal.Looped = true
+					decal.Parent = capesurface
+					decal:Play()
+				else
+					local decal = Instance.new('ImageLabel')
+					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://10743809431'
+					decal.Size = UDim2.fromScale(1, 1)
+					decal.BackgroundTransparency = 1
+					decal.Parent = capesurface
+				end
 	
 				Cape:Clean(part)
 				Cape:Clean(entitylib.Events.LocalAdded:Connect(createMotor))
@@ -8466,16 +8451,12 @@ run(function()
 						motor.DesiredAngle = math.rad(6) + math.rad(velo) + (velo > 1 and math.abs(math.cos(tick() * 5)) / 3 or 0)
 					end
 	
-					local visible = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
-					for _, capesurface in capesurfaces do
-						capesurface.Enabled = visible
-					end
-					part.Transparency = visible and 0 or 1
+					capesurface.Enabled = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
+					part.Transparency = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6 and 0 or 1
 				end))
 			else
 				part = nil
 				motor = nil
-				table.clear(capesurfaces)
 			end
 		end,
 		Tooltip = 'Add\'s a cape to your character'
