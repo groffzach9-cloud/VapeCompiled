@@ -4966,8 +4966,6 @@ run(function()
                                     
                                     local vapeModules = vape.Modules
                                     local flyEnabled = vapeModules.Fly
-                                    local infFlyEnabled = vapeModules.run(function()
-    
                                     local longJumpEnabled = vapeModules.LongJump
                                     
                                     local yMask = vector3new(1, 0, 1)
@@ -4977,7 +4975,7 @@ run(function()
                                         frameCounter = frameCounter + 1
                                         
                                         if frameCounter % 5 == 0 then
-                                            if flyEnabled.Enabled or infFlyEnabled.Enabled or longJumpEnabled.Enabled then
+                                            if flyEnabled.Enabled or longJumpEnabled.Enabled then
                                                 connection:Disconnect()
                                                 AntiFallDirection = nil
                                                 return
