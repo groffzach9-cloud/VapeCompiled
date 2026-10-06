@@ -5352,7 +5352,7 @@ run(function()
     local function updateProgressBar()
         if not FlyAnywayProgressBarFrame then return end
 
-        if (TP and TP.Enabled) or not entitylib.isAlive then
+        if not entitylib.isAlive then
             FlyAnywayProgressBarFrame.Visible = false
             return
         end
@@ -5624,23 +5624,26 @@ run(function()
             if callback then
                 FlyAnywayProgressBarFrame = Instance.new("Frame")
                 FlyAnywayProgressBarFrame.AnchorPoint = Vector2.new(0.5, 0)
-                FlyAnywayProgressBarFrame.Position = udim2new(0.5, 0, 1, -200)
-                FlyAnywayProgressBarFrame.Size = udim2new(0.2, 0, 0, 20)
+                local isMobile = inputService.TouchEnabled
+                FlyAnywayProgressBarFrame.Position = isMobile and udim2new(0.5, 0, 0, 90) or udim2new(0.5, 0, 1, -200)
+                FlyAnywayProgressBarFrame.Size = udim2new(isMobile and 0.6 or 0.2, 0, 0, 22)
                 FlyAnywayProgressBarFrame.BackgroundTransparency = 0.5
                 FlyAnywayProgressBarFrame.BorderSizePixel = 0
                 FlyAnywayProgressBarFrame.BackgroundColor3 = Color3.new(0, 0, 0)
                 FlyAnywayProgressBarFrame.Visible = false
+                FlyAnywayProgressBarFrame.ZIndex = 100
                 FlyAnywayProgressBarFrame.Parent = vape.gui
                 
                 local FlyAnywayProgressBarFrame2 = Instance.new("Frame")
                 FlyAnywayProgressBarFrame2.Name = "Frame"
                 FlyAnywayProgressBarFrame2.AnchorPoint = Vector2.new(0, 0)
                 FlyAnywayProgressBarFrame2.Position = udim2new(0, 0, 0, 0)
-                FlyAnywayProgressBarFrame2.Size = udim2new(1, 0, 0, 20)
+                FlyAnywayProgressBarFrame2.Size = udim2new(1, 0, 0, 22)
                 FlyAnywayProgressBarFrame2.BackgroundTransparency = 0
                 FlyAnywayProgressBarFrame2.BorderSizePixel = 0
                 FlyAnywayProgressBarFrame2.BackgroundColor3 = BarColor and Color3.fromHSV(BarColor.Hue, BarColor.Sat, BarColor.Value) or Color3.fromHSV(vape.GUIColor.Hue, vape.GUIColor.Sat, vape.GUIColor.Value)
                 FlyAnywayProgressBarFrame2.Visible = true
+                FlyAnywayProgressBarFrame2.ZIndex = 101
                 FlyAnywayProgressBarFrame2.Parent = FlyAnywayProgressBarFrame
                 
                 local FlyAnywayProgressBartext = Instance.new("TextLabel")
@@ -5653,6 +5656,7 @@ run(function()
                 FlyAnywayProgressBartext.Size = udim2new(1, 0, 1, 0)
                 FlyAnywayProgressBartext.BackgroundTransparency = 1
                 FlyAnywayProgressBartext.Position = udim2new(0, 0, 0, 0)
+                FlyAnywayProgressBartext.ZIndex = 102
                 FlyAnywayProgressBartext.Parent = FlyAnywayProgressBarFrame
             else
                 if FlyAnywayProgressBarFrame then 
@@ -5678,12 +5682,7 @@ run(function()
 
     TP = Fly:CreateToggle({
         Name = 'TP Down',
-        Default = true,
-        Function = function(callback)
-            if callback and FlyAnywayProgressBarFrame then
-                FlyAnywayProgressBarFrame.Visible = false
-            end
-        end
+        Default = true
     })
     MobileButtons = Fly:CreateToggle({
         Name = "Mobile Buttons",
