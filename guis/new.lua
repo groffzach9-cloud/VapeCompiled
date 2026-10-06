@@ -912,7 +912,7 @@ function vape:LoadGUI()
 		Text = 'misc'
 	})
 	vape:CreateCategory({
-		Name = 'Comballpt',
+		Name = 'weird stuff',
 		Icon = getvapeasset('newvape/assets/new/combat.png'),
 		Size = UDim2.fromOffset(13, 14)
 	})
