@@ -4728,11 +4728,14 @@ run(function()
 	local Reflectance
 	local WaveSize
 	local WaveSpeed
+	local SurfaceSize
+	local Depth
 	local terrain = cloneref(workspace:FindFirstChildOfClass('Terrain'))
 	local originalSettings
+	local terrainWaterFailed = false
 
 	local function applyOceanSettings()
-		if not terrain then return end
+		if not terrain or terrainWaterFailed then return end
 		local success, err = pcall(function()
 			terrain.WaterColor = Color3.fromHSV(WaterColor.Hue, WaterColor.Sat, WaterColor.Value)
 			terrain.WaterTransparency = math.clamp(Transparency.Value, 0, 1)
@@ -4748,9 +4751,7 @@ run(function()
 				end
 				originalSettings = nil
 			end
-			if OceanShader.Enabled then
-				OceanShader:Toggle()
-			end
+			terrainWaterFailed = true
 			vape:CreateNotification('OceanShader', 'Could not apply water settings: '..tostring(err), 8, 'warning')
 		end
 	end
@@ -4758,31 +4759,79 @@ run(function()
 	OceanShader = vape.Categories.Render:CreateModule({
 		Name = 'OceanShader',
 		Function = function(callback)
-			if not terrain then
-				if callback then
-					OceanShader:Toggle()
-					vape:CreateNotification('OceanShader', 'Terrain water is unavailable.', 5, 'warning')
-				end
-				return
-			end
-
 			if callback then
-				originalSettings = {
-					WaterColor = terrain.WaterColor,
-					WaterTransparency = terrain.WaterTransparency,
-					WaterReflectance = terrain.WaterReflectance,
-					WaterWaveSize = terrain.WaterWaveSize,
-					WaterWaveSpeed = terrain.WaterWaveSpeed
-				}
-				applyOceanSettings()
-			elseif originalSettings then
-				for property, value in originalSettings do
-					terrain[property] = value
+				terrainWaterFailed = false
+				if terrain then
+					originalSettings = {
+						WaterColor = terrain.WaterColor,
+						WaterTransparency = terrain.WaterTransparency,
+						WaterReflectance = terrain.WaterReflectance,
+						WaterWaveSize = terrain.WaterWaveSize,
+						WaterWaveSpeed = terrain.WaterWaveSpeed
+					}
 				end
-				originalSettings = nil
+				applyOceanSettings()
+				local ocean = Instance.new('Folder')
+				ocean.Name = 'VapeOceanSurface'
+				ocean.Parent = workspace
+				OceanShader:Clean(ocean)
+
+				local tileCount = 9
+				local tiles = table.create(tileCount * tileCount)
+				for x = 1, tileCount do
+					for z = 1, tileCount do
+						local tile = Instance.new('Part')
+						tile.Name = 'OceanWave'
+						tile.Anchored = true
+						tile.CanCollide = false
+						tile.CanTouch = false
+						tile.CanQuery = false
+						tile.CastShadow = false
+						tile.Material = Enum.Material.Glass
+						tile.TopSurface = Enum.SurfaceType.Smooth
+						tile.BottomSurface = Enum.SurfaceType.Smooth
+						tile.Parent = ocean
+						tiles[#tiles + 1] = {Part = tile, X = x - 5, Z = z - 5}
+					end
+				end
+
+				OceanShader:Clean(runService.RenderStepped:Connect(function()
+					local root = entitylib.isAlive and entitylib.character.RootPart
+					local center = root and root.Position or gameCamera.CFrame.Position
+					local tileSize = SurfaceSize.Value / tileCount
+					local baseX = math.floor(center.X / tileSize) * tileSize
+					local baseZ = math.floor(center.Z / tileSize) * tileSize
+					local baseY = center.Y - Depth.Value
+					local now = os.clock()
+					local speed = WaveSpeed.Value * (math.pi * 2 / 60)
+					local waveHeight = WaveSize.Value
+					local color = Color3.fromHSV(WaterColor.Hue, WaterColor.Sat, WaterColor.Value)
+
+					for _, data in tiles do
+						local x = baseX + (data.X * tileSize)
+						local z = baseZ + (data.Z * tileSize)
+						local wave = math.sin(x * 0.012 + now * speed)
+							* math.cos(z * 0.009 - now * speed * 0.75)
+							* waveHeight
+						local tile = data.Part
+						tile.Size = Vector3.new(tileSize + 0.1, 3, tileSize + 0.1)
+						tile.Position = Vector3.new(x, baseY + wave, z)
+						tile.Color = color
+						tile.Transparency = math.clamp(Transparency.Value, 0, 1)
+						tile.Reflectance = math.clamp(Reflectance.Value, 0, 1)
+					end
+				end))
+			else
+				if terrain and originalSettings then
+					for property, value in originalSettings do
+						terrain[property] = value
+					end
+					originalSettings = nil
+				end
+				terrainWaterFailed = false
 			end
 		end,
-		Tooltip = 'Enhances Terrain water with reflective color and animated waves'
+		Tooltip = 'Creates a local animated ocean surface and enhances Terrain water'
 	})
 	WaterColor = OceanShader:CreateColorSlider({
 		Name = 'Water Color',
@@ -4836,6 +4885,28 @@ run(function()
 		Min = 0,
 		Max = 100,
 		Default = 24,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+	SurfaceSize = OceanShader:CreateSlider({
+		Name = 'Surface Size',
+		Min = 128,
+		Max = 1024,
+		Default = 512,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+	Depth = OceanShader:CreateSlider({
+		Name = 'Depth Below Player',
+		Min = 5,
+		Max = 200,
+		Default = 40,
 		Function = function()
 			if OceanShader.Enabled then
 				applyOceanSettings()
