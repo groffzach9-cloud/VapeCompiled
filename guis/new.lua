@@ -911,11 +911,11 @@ function vape:LoadGUI()
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
-	mainapi:CreateCategory({
-    Text = 'weird'
-    Icon = getcustomasset('newvape/assets/new/youricon.png'),
-    Size = UDim2.fromOffset(18, 18)
-})
+	vape:CreateCategory({
+		Name = 'exploits',
+		Icon = getvapeasset('newvape/assets/new/inventory.png'),
+		Size = UDim2.fromOffset(15, 14)
+	})
 	--[[
 		Friends
 	]]
