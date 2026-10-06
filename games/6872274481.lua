@@ -23486,7 +23486,7 @@ run(function()
 		lastMessageAt = now
 	end
 
-	AutoGG = vape.Categories.Minigames:CreateModule({
+	AutoGG = vape.Categories.Render:CreateModule({
 		Name = 'AutoGG',
 		Tooltip = 'Sends a friendly message after a kill or bed break.',
 		Function = function(callback)
