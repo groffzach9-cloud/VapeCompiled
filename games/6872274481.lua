@@ -23540,6 +23540,8 @@ end)
 
 run(function()
 	local Breaker
+	local BedNuker
+	local bedNukerStartedBreaker = false
 	local TargetMode
 	local Mode
 	local Range
@@ -24159,6 +24161,10 @@ run(function()
 				end
 
 				local function candidateLists()
+					if BedNuker and BedNuker.Enabled then
+						return {beds}
+					end
+
 					local lists = {}
 					if Bed.Enabled then
 						table.insert(lists, beds)
@@ -24545,6 +24551,25 @@ run(function()
 		Darker = true,
 		Visible = false
 	})
+
+	BedNuker = vape.Categories.Minigames:CreateModule({
+		Name = 'BedNuker',
+		Function = function(callback)
+			if callback then
+				bedNukerStartedBreaker = not Breaker.Enabled
+				if bedNukerStartedBreaker then
+					Breaker:Toggle()
+				end
+			elseif bedNukerStartedBreaker then
+				bedNukerStartedBreaker = false
+				if Breaker.Enabled then
+					Breaker:Toggle()
+				end
+			end
+		end,
+		Tooltip = 'Automatically finds and breaks nearby enemy beds'
+	})
+
 	task.defer(function()
 		if CustomHealth and CustomHealth.Object and Effect then
 			CustomHealth.Object.Visible = Effect.Enabled
