@@ -904,7 +904,7 @@ function vape:LoadGUI()
 		Size = UDim2.fromOffset(14, 14)
 	})
 	vape:CreateCategory({
-		Name = 'kits',
+		Name = 'Kits',
 		Icon = getvapeasset('newvape/assets/new/inventory.png'),
 		Size = UDim2.fromOffset(15, 14)
 	})
