@@ -7496,12 +7496,35 @@ run(function()
 		if gravity == nil then gravity = 196.2 end
 		if gravity < 1 then gravity = 0 end
 
-		local targetPart = ent.RootPart
-		local playerGravity = targetGravity(ent)
+		local busyToken
+		local ownsBusy = not batch
 
+		if ownsBusy then
+			busyToken = setFHBusy()
+		end
+
+		if not fhEquipAwait(item.tool) then
+			if ownsBusy then
+				fhRestoreSword()
+				clearFHBusy(busyToken)
+			end
+			return false
+		end
+
+		local root = entitylib.character and entitylib.character.RootPart
+		local targetPart = ent.RootPart
+		if not root or not targetPart or not targetPart.Parent then
+			if ownsBusy then
+				fhRestoreSword()
+				clearFHBusy(busyToken)
+			end
+			return false
+		end
+
+		selfPos = root.Position
+		local playerGravity = targetGravity(ent)
 		local smoothVel, rawVel = smoothedVelocity(ent, targetPart)
 		smoothVel = Vector3.new(smoothVel.X, rawVel.Y, smoothVel.Z)
-
 		local chestPos = targetPart.Position + Vector3.new(0, (ent.HipHeight or 2) * 0.15, 0)
 
 		setFHFilter(ent.Character)
@@ -7531,21 +7554,6 @@ run(function()
 		local firePos = selfPos - Vector3.new(0, 0.5, 0)
 		local dir = CFrame.lookAt(muzzlePos, calc).LookVector
 		local id = httpService:GenerateGUID(true)
-
-		local busyToken
-		local ownsBusy = not batch
-
-		if ownsBusy then
-			busyToken = setFHBusy()
-		end
-
-		if not fhEquipAwait(item.tool) then
-			if ownsBusy then
-				fhRestoreSword()
-				clearFHBusy(busyToken)
-			end
-			return false
-		end
 
 		pcall(function()
 			frostyGunRemote:FireServer({keyHold = true})
@@ -7744,8 +7752,6 @@ run(function()
 			return false
 		end
 
-		local selfPos = myRoot.Position
-		local targetPart = ent.RootPart
 		local gmeta = bedwars.ProjectileMeta.glue_trap
 		local gSpeed = tonumber(gmeta and gmeta.launchVelocity) or 100
 		local gGrav = tonumber(gmeta and gmeta.gravitationalAcceleration) or 85
@@ -7762,14 +7768,52 @@ run(function()
 
 		gSpeed = gSpeed * (gMin + (1 - gMin) * gRatio)
 
+		local busyToken
+		local ownsBusy = not batch
+
+		if ownsBusy then
+			busyToken = setFHBusy()
+		end
+
+		if not fhEquipAwait(item.tool) then
+			if ownsBusy then
+				fhRestoreSword()
+				clearFHBusy(busyToken)
+			end
+			return false
+		end
+
+		myRoot = entitylib.character and entitylib.character.RootPart
+		local targetPart = ent.RootPart
+		if not myRoot or not targetPart or not targetPart.Parent
+			or (targetPart.Position - myRoot.Position).Magnitude > 45 then
+			if ownsBusy then
+				fhRestoreSword()
+				clearFHBusy(busyToken)
+			end
+			return false
+		end
+
+		now = tick()
+		if isGlooped(ent) then
+			gloopTracker[key] = {
+				target = ent,
+				lastShot = now,
+				gloopedUntil = now + 8
+			}
+			if ownsBusy then
+				fhRestoreSword()
+				clearFHBusy(busyToken)
+			end
+			return false
+		end
+
+		local selfPos = myRoot.Position
 		local smoothVel, rawVel = smoothedVelocity(ent, targetPart)
 		smoothVel = Vector3.new(smoothVel.X, rawVel.Y, smoothVel.Z)
-
 		local playerGravity = targetGravity(ent)
 		local aimPos = targetPart.Position - Vector3.new(0, (ent.HipHeight or 2) * 0.25, 0)
-
 		setFHFilter(ent.Character)
-
 		local originPos = selfPos + Vector3.new(0, 1.5, 0)
 
 		local calc, _gImpact, gFlight = prediction.SolveTrajectory(
@@ -7790,26 +7834,15 @@ run(function()
 		)
 
 		local gLife = tonumber(gmeta and gmeta.predictionLifetimeSec) or 2
-
 		if not calc or (gFlight and gFlight > gLife) then
-			return false
-		end
-
-		local dir = CFrame.lookAt(originPos, calc).LookVector
-		local busyToken
-		local ownsBusy = not batch
-
-		if ownsBusy then
-			busyToken = setFHBusy()
-		end
-
-		if not fhEquipAwait(item.tool) then
 			if ownsBusy then
 				fhRestoreSword()
 				clearFHBusy(busyToken)
 			end
 			return false
 		end
+
+		local dir = CFrame.lookAt(originPos, calc).LookVector
 
 		local gok, gerr = pcall(function()
 			local weaponInst = item.tool
