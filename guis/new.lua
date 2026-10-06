@@ -916,6 +916,11 @@ function vape:LoadGUI()
 		Icon = getvapeasset('newvape/assets/new/inventory.png'),
 		Size = UDim2.fromOffset(15, 14)
 	})
+	vape:CreateCategory({
+		Name = 'Exploits',
+		Icon = getvapeasset('newvape/assets/new/utility.png'),
+		Size = UDim2.fromOffset(15, 14)
+	})
 	--[[
 		Friends
 	]]
