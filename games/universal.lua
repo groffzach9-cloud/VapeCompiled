@@ -4722,6 +4722,114 @@ run(function()
 end)
 
 run(function()
+	local OceanShader
+	local WaterColor
+	local Transparency
+	local Reflectance
+	local WaveSize
+	local WaveSpeed
+	local terrain = cloneref(workspace:FindFirstChildOfClass('Terrain'))
+	local originalSettings
+
+	local function applyOceanSettings()
+		if not terrain then return end
+		terrain.WaterColor = Color3.fromHSV(WaterColor.Hue, WaterColor.Sat, WaterColor.Value)
+		terrain.WaterTransparency = Transparency.Value
+		terrain.WaterReflectance = Reflectance.Value
+		terrain.WaterWaveSize = WaveSize.Value
+		terrain.WaterWaveSpeed = WaveSpeed.Value
+	end
+
+	OceanShader = vape.Categories.Render:CreateModule({
+		Name = 'OceanShader',
+		Function = function(callback)
+			if not terrain then
+				if callback then
+					OceanShader:Toggle()
+					vape:CreateNotification('OceanShader', 'Terrain water is unavailable.', 5, 'warning')
+				end
+				return
+			end
+
+			if callback then
+				originalSettings = {
+					WaterColor = terrain.WaterColor,
+					WaterTransparency = terrain.WaterTransparency,
+					WaterReflectance = terrain.WaterReflectance,
+					WaterWaveSize = terrain.WaterWaveSize,
+					WaterWaveSpeed = terrain.WaterWaveSpeed
+				}
+				applyOceanSettings()
+			elseif originalSettings then
+				for property, value in originalSettings do
+					terrain[property] = value
+				end
+				originalSettings = nil
+			end
+		end,
+		Tooltip = 'Enhances Terrain water with reflective color and animated waves'
+	})
+	WaterColor = OceanShader:CreateColorSlider({
+		Name = 'Water Color',
+		DefaultHue = 0.53,
+		DefaultSat = 0.76,
+		DefaultValue = 0.62,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+	Transparency = OceanShader:CreateSlider({
+		Name = 'Transparency',
+		Min = 0,
+		Max = 1,
+		Default = 0.16,
+		Decimal = 100,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+	Reflectance = OceanShader:CreateSlider({
+		Name = 'Reflectance',
+		Min = 0,
+		Max = 1,
+		Default = 0.45,
+		Decimal = 100,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+	WaveSize = OceanShader:CreateSlider({
+		Name = 'Wave Size',
+		Min = 0,
+		Max = 1,
+		Default = 0.35,
+		Decimal = 100,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+	WaveSpeed = OceanShader:CreateSlider({
+		Name = 'Wave Speed',
+		Min = 0,
+		Max = 100,
+		Default = 24,
+		Function = function()
+			if OceanShader.Enabled then
+				applyOceanSettings()
+			end
+		end
+	})
+end)
+
+run(function()
 	local GamingChair = {Enabled = false}
 	local Color
 	local wheelpositions = {
