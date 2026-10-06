@@ -7690,14 +7690,14 @@ run(function()
 	local Freecam
 	local Mode
 	local Value
-	local randomkey, module, old = httpService:GenerateGUID(false)
+	local randomkey = httpService:GenerateGUID(false)
 	local movementKeys = {
-		{KeyCode = Enum.KeyCode.W, Title = 'Forward', Position = UDim2.new(0.78, 0, 0.68, 0)},
-		{KeyCode = Enum.KeyCode.S, Title = 'Back', Position = UDim2.new(0.78, 0, 0.8, 0)},
-		{KeyCode = Enum.KeyCode.A, Title = 'Left', Position = UDim2.new(0.68, 0, 0.8, 0)},
-		{KeyCode = Enum.KeyCode.D, Title = 'Right', Position = UDim2.new(0.88, 0, 0.8, 0)},
-		{KeyCode = Enum.KeyCode.Q, Title = 'Down', Position = UDim2.new(0.68, 0, 0.68, 0)},
-		{KeyCode = Enum.KeyCode.E, Title = 'Up', Position = UDim2.new(0.88, 0, 0.68, 0)}
+		{KeyCode = Enum.KeyCode.W, Title = 'Forward', Position = UDim2.new(0.78, 0, 0.54, 0)},
+		{KeyCode = Enum.KeyCode.S, Title = 'Back', Position = UDim2.new(0.78, 0, 0.66, 0)},
+		{KeyCode = Enum.KeyCode.A, Title = 'Left', Position = UDim2.new(0.68, 0, 0.66, 0)},
+		{KeyCode = Enum.KeyCode.D, Title = 'Right', Position = UDim2.new(0.88, 0, 0.66, 0)},
+		{KeyCode = Enum.KeyCode.Q, Title = 'Down', Position = UDim2.new(0.68, 0, 0.54, 0)},
+		{KeyCode = Enum.KeyCode.E, Title = 'Up', Position = UDim2.new(0.88, 0, 0.54, 0)}
 	}
 	local pressedMovementKeys = {}
 	
@@ -7722,59 +7722,120 @@ run(function()
 					end)
 					return
 				end
-	
-				repeat
-					task.wait(0.1)
-	
-					for _, connection in getconnections(gameCamera:GetPropertyChangedSignal('CameraType')) do
-						if connection.Function then
-							module = debug.getupvalue(connection.Function, 1)
-						end
+
+				local camera = workspace.CurrentCamera or gameCamera
+				local savedCameras = {}
+				local function takeCamera(cameraToTake)
+					if cameraToTake and not savedCameras[cameraToTake] then
+						savedCameras[cameraToTake] = {
+							CameraType = cameraToTake.CameraType,
+							CameraSubject = cameraToTake.CameraSubject,
+							CFrame = cameraToTake.CFrame,
+							Focus = cameraToTake.Focus,
+							FieldOfView = cameraToTake.FieldOfView
+						}
+						cameraToTake.CameraType = Enum.CameraType.Scriptable
 					end
-				until module or not Freecam.Enabled
-	
-				if module and module.activeCameraController and Freecam.Enabled then
-					old = module.activeCameraController.GetSubjectPosition
-					local camPos = old(module.activeCameraController) or Vector3.zero
-					module.activeCameraController.GetSubjectPosition = function()
-						return camPos
-					end
-	
-					Freecam:Clean(runService.PreSimulation:Connect(function(dt)
-						if not inputService:GetFocusedTextBox() then
-							local function isMovementKeyDown(keyCode)
-								return pressedMovementKeys[keyCode] or inputService:IsKeyDown(keyCode)
-							end
-							local forward = (isMovementKeyDown(Enum.KeyCode.W) and -1 or 0) + (isMovementKeyDown(Enum.KeyCode.S) and 1 or 0)
-							local side = (isMovementKeyDown(Enum.KeyCode.A) and -1 or 0) + (isMovementKeyDown(Enum.KeyCode.D) and 1 or 0)
-							local up = (isMovementKeyDown(Enum.KeyCode.Q) and -1 or 0) + (isMovementKeyDown(Enum.KeyCode.E) and 1 or 0)
-							dt = dt * (inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 0.25 or 1)
-							camPos = (CFrame.lookAlong(camPos, gameCamera.CFrame.LookVector) * CFrame.new(Vector3.new(side, up, forward) * (Value.Value * dt))).Position
-						end
-					end))
-	
-					for _, movementKey in movementKeys do
-						local keyCode = movementKey.KeyCode
-						local actionName = 'FreecamMovement'..randomkey..keyCode.Name
-						contextService:BindActionAtPriority(actionName, function(_, inputState)
-							if inputState == Enum.UserInputState.Begin then
-								if not inputService:GetFocusedTextBox() then
-									pressedMovementKeys[keyCode] = true
-								end
-							elseif inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel then
-								pressedMovementKeys[keyCode] = nil
-							end
-							return Enum.ContextActionResult.Sink
-						end, inputService.TouchEnabled, Enum.ContextActionPriority.High.Value, keyCode)
-						if inputService.TouchEnabled then
-							contextService:SetTitle(actionName, movementKey.Title)
-							contextService:SetPosition(actionName, movementKey.Position)
-						end
-					end
-					contextService:BindActionAtPriority('FreecamKeyboard'..randomkey, function()
-						return Enum.ContextActionResult.Sink
-					end, false, Enum.ContextActionPriority.High.Value, Enum.KeyCode.Up, Enum.KeyCode.Down)
 				end
+
+				takeCamera(camera)
+				local position = camera.CFrame.Position
+				local pitch, yaw = camera.CFrame:ToOrientation()
+				local mouseBehavior = inputService.MouseBehavior
+				local touches = {}
+				if inputService.MouseEnabled then
+					inputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+				end
+
+				Freecam:Clean(inputService.TouchStarted:Connect(function(touch)
+					if touch.Position.Y < camera.ViewportSize.Y * 0.5 then
+						touches[touch] = touch.Position
+					end
+				end))
+				Freecam:Clean(inputService.TouchMoved:Connect(function(touch)
+					local previous = touches[touch]
+					if previous and not inputService:GetFocusedTextBox() then
+						local delta = touch.Position - previous
+						yaw -= delta.X * 0.003
+						pitch = math.clamp(pitch + delta.Y * 0.003, -math.pi / 2 + 0.01, math.pi / 2 - 0.01)
+						touches[touch] = touch.Position
+					end
+				end))
+				Freecam:Clean(inputService.TouchEnded:Connect(function(touch)
+					touches[touch] = nil
+				end))
+
+				Freecam:Clean(runService.RenderStepped:Connect(function(dt)
+					camera = workspace.CurrentCamera or camera
+					takeCamera(camera)
+
+					if inputService.MouseEnabled and not inputService:GetFocusedTextBox() then
+						local delta = inputService:GetMouseDelta()
+						yaw -= delta.X * 0.003
+						pitch = math.clamp(pitch + delta.Y * 0.003, -math.pi / 2 + 0.01, math.pi / 2 - 0.01)
+					end
+
+					if not inputService:GetFocusedTextBox() then
+						local function isMovementKeyDown(keyCode)
+							return pressedMovementKeys[keyCode] or inputService:IsKeyDown(keyCode)
+						end
+						local forward = (isMovementKeyDown(Enum.KeyCode.W) and 1 or 0) - (isMovementKeyDown(Enum.KeyCode.S) and 1 or 0)
+						local side = (isMovementKeyDown(Enum.KeyCode.D) and 1 or 0) - (isMovementKeyDown(Enum.KeyCode.A) and 1 or 0)
+						local up = (isMovementKeyDown(Enum.KeyCode.E) and 1 or 0) - (isMovementKeyDown(Enum.KeyCode.Q) and 1 or 0)
+						local rotation = CFrame.fromOrientation(pitch, yaw, 0)
+						local movement = rotation:VectorToWorldSpace(Vector3.new(side, up, -forward))
+						if movement.Magnitude > 1 then
+							movement = movement.Unit
+						end
+						local speed = Value.Value * dt * (inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 0.25 or 1)
+						position += movement * speed
+						camera.CFrame = CFrame.new(position) * rotation
+						camera.Focus = CFrame.new(position + rotation.LookVector * 512)
+					end
+				end))
+
+				for _, movementKey in movementKeys do
+					local keyCode = movementKey.KeyCode
+					local actionName = 'FreecamMovement'..randomkey..keyCode.Name
+					contextService:BindActionAtPriority(actionName, function(_, inputState)
+						if inputState == Enum.UserInputState.Begin then
+							if not inputService:GetFocusedTextBox() then
+								pressedMovementKeys[keyCode] = true
+							end
+						elseif inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel then
+							pressedMovementKeys[keyCode] = nil
+						end
+						return Enum.ContextActionResult.Sink
+					end, inputService.TouchEnabled, Enum.ContextActionPriority.High.Value, keyCode)
+					if inputService.TouchEnabled then
+						contextService:SetTitle(actionName, movementKey.Title)
+						contextService:SetPosition(actionName, movementKey.Position)
+					end
+				end
+				contextService:BindActionAtPriority('FreecamKeyboard'..randomkey, function()
+					return Enum.ContextActionResult.Sink
+				end, false, Enum.KeyCode.Up, Enum.KeyCode.Down)
+
+				Freecam:Clean(function()
+					contextService:UnbindAction('FreecamKeyboard'..randomkey)
+					for _, movementKey in movementKeys do
+						contextService:UnbindAction('FreecamMovement'..randomkey..movementKey.KeyCode.Name)
+						pressedMovementKeys[movementKey.KeyCode] = nil
+					end
+
+					if inputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
+						inputService.MouseBehavior = mouseBehavior
+					end
+					for cameraToRestore, saved in savedCameras do
+						if cameraToRestore.Parent then
+							cameraToRestore.CFrame = saved.CFrame
+							cameraToRestore.Focus = saved.Focus
+							cameraToRestore.FieldOfView = saved.FieldOfView
+							cameraToRestore.CameraSubject = saved.CameraSubject
+							cameraToRestore.CameraType = saved.CameraType
+						end
+					end
+				end)
 			else
 				pcall(function()
 					contextService:UnbindAction('FreecamKeyboard'..randomkey)
@@ -7783,15 +7844,9 @@ run(function()
 					contextService:UnbindAction('FreecamMovement'..randomkey..movementKey.KeyCode.Name)
 					pressedMovementKeys[movementKey.KeyCode] = nil
 				end
-	
-				if module and old then
-					module.activeCameraController.GetSubjectPosition = old
-					module = nil
-					old = nil
-				end
 			end
 		end,
-		Tooltip = 'Lets you fly and clip through walls freely\nwithout moving your player server-sided.'
+		Tooltip = 'Lets you fly and clip through walls freely\nwithout moving your player server-sided.\nOn mobile, drag the upper screen to look and use the on-screen buttons to move.'
 	})
 	Mode = Freecam:CreateDropdown({
 		Name = 'Mode',
