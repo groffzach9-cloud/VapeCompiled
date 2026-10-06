@@ -4735,8 +4735,8 @@ run(function()
 		return (calc - spawnPos).Unit * projSpeed
 	end
 
-	SilentAim = vape.Categories.Blatant:CreateModule({
-		Name = 'SilentAim',
+	SilentAim = vape.Categories.weird stuff:CreateModule({
+		Name = 'silentaim ',
 		Function = function(callback)
 			if callback then
 				if ProjectileAimbot and ProjectileAimbot.Enabled then
