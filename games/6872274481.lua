@@ -25000,14 +25000,82 @@ end)
 run(function()
     local InfiniteJump
     local TP
+    local ProgressBar
+    local jumpHeld = false
+    local progressFrame
+    local progressFill
+    local progressText
 
     local JumpVelocity = 50 -- fixed jump strength
+    local TPDownDelay = 2.5
     local tpTick = 0
     local oldy
     local rayCheck = RaycastParams.new()
     rayCheck.RespectCanCollide = true
     local lastGroundTime = tick()
     local tpToggle = true
+
+    local function updateProgressBar(now, grounded)
+        if not progressFrame then
+            return
+        end
+        local visible = ProgressBar and ProgressBar.Enabled and TP and TP.Enabled and entitylib.isAlive and not grounded and tpToggle
+        progressFrame.Visible = visible
+        if not visible then
+            return
+        end
+
+        local elapsed = math.clamp(now - lastGroundTime, 0, TPDownDelay)
+        progressFill.Size = UDim2.new(elapsed / TPDownDelay, 0, 1, 0)
+        progressText.Text = string.format('TP Down in %.1fs', math.max(TPDownDelay - elapsed, 0))
+    end
+
+    local function createProgressBar()
+        if progressFrame then
+            return
+        end
+
+        progressFrame = Instance.new('Frame')
+        progressFrame.Name = 'InfiniteJumpTPProgress'
+        progressFrame.AnchorPoint = Vector2.new(0.5, 0)
+        progressFrame.Position = inputService.TouchEnabled and UDim2.new(0.5, 0, 0, 90) or UDim2.new(0.5, 0, 1, -200)
+        progressFrame.Size = inputService.TouchEnabled and UDim2.new(0.6, 0, 0, 22) or UDim2.new(0.2, 0, 0, 22)
+        progressFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+        progressFrame.BackgroundTransparency = 0.5
+        progressFrame.BorderSizePixel = 0
+        progressFrame.Visible = false
+        progressFrame.ZIndex = 100
+        progressFrame.Parent = vape.gui
+
+        progressFill = Instance.new('Frame')
+        progressFill.Name = 'Fill'
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        progressFill.BackgroundColor3 = Color3.fromHSV(vape.GUIColor.Hue, vape.GUIColor.Sat, vape.GUIColor.Value)
+        progressFill.BorderSizePixel = 0
+        progressFill.ZIndex = 101
+        progressFill.Parent = progressFrame
+
+        progressText = Instance.new('TextLabel')
+        progressText.Name = 'Text'
+        progressText.BackgroundTransparency = 1
+        progressText.Size = UDim2.new(1, 0, 1, 0)
+        progressText.Font = Enum.Font.Gotham
+        progressText.Text = 'TP Down in 2.5s'
+        progressText.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+        progressText.TextSize = 16
+        progressText.TextStrokeTransparency = 0
+        progressText.ZIndex = 102
+        progressText.Parent = progressFrame
+    end
+
+    local function destroyProgressBar()
+        if progressFrame then
+            progressFrame:Destroy()
+        end
+        progressFrame = nil
+        progressFill = nil
+        progressText = nil
+    end
 
     InfiniteJump = vape.Categories.Blatant:CreateModule({
         Name = "InfiniteJump",
@@ -25017,59 +25085,43 @@ run(function()
                 lastGroundTime = tick()
                 tpToggle = true
                 oldy = nil
+                jumpHeld = false
+                createProgressBar()
 
-                -- KEYBOARD SUPPORT
-                InfiniteJump:Clean(inputService.InputBegan:Connect(function(input, gameProcessed)
-                    if gameProcessed then return end
-                    if input.UserInputType == Enum.UserInputType.Keyboard 
-                    and input.KeyCode == Enum.KeyCode.Space then
-                        while inputService:IsKeyDown(Enum.KeyCode.Space) and InfiniteJump.Enabled do
-                            if entitylib.isAlive and lplr.Character and lplr.Character.PrimaryPart then
-                                local root = lplr.Character.PrimaryPart
-                                root.Velocity = Vector3.new(
-                                    root.Velocity.X,
-                                    JumpVelocity,
-                                    root.Velocity.Z
-                                )
-                            end
-                            task.wait()
-                        end
+                InfiniteJump:Clean(inputService.InputBegan:Connect(function(input)
+                    if inputService:GetFocusedTextBox() then return end
+                    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+                        jumpHeld = true
                     end
                 end))
 
-                -- MOBILE SUPPORT
+                InfiniteJump:Clean(inputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+                        jumpHeld = false
+                    end
+                end))
+
                 if inputService.TouchEnabled then
-                    local Jumping = false
-                    local JumpButton = lplr.PlayerGui:WaitForChild("TouchGui")
-                        :WaitForChild("TouchControlFrame")
-                        :WaitForChild("JumpButton")
-
-                    InfiniteJump:Clean(JumpButton.MouseButton1Down:Connect(function()
-                        Jumping = true
-                    end))
-
-                    InfiniteJump:Clean(JumpButton.MouseButton1Up:Connect(function()
-                        Jumping = false
-                    end))
-
-                    InfiniteJump:Clean(runService.RenderStepped:Connect(function()
-                        if Jumping and entitylib.isAlive and InfiniteJump.Enabled then
-                            local root = lplr.Character.PrimaryPart
-                            root.Velocity = Vector3.new(
-                                root.Velocity.X,
-                                JumpVelocity,
-                                root.Velocity.Z
-                            )
-                        end
-                    end))
+                    local touchGui = lplr.PlayerGui:FindFirstChild('TouchGui')
+                    local controlFrame = touchGui and touchGui:FindFirstChild('TouchControlFrame')
+                    local jumpButton = controlFrame and controlFrame:FindFirstChild('JumpButton')
+                    if jumpButton then
+                        InfiniteJump:Clean(jumpButton.MouseButton1Down:Connect(function()
+                            jumpHeld = true
+                        end))
+                        InfiniteJump:Clean(jumpButton.MouseButton1Up:Connect(function()
+                            jumpHeld = false
+                        end))
+                    end
                 end
 
-                -- TP DOWN LOGIC (copied from Fly style)
                 InfiniteJump:Clean(runService.PreSimulation:Connect(function()
                     if not entitylib.isAlive or not lplr.Character then
                         oldy = nil
                         tpToggle = true
+                        jumpHeld = false
                         lastGroundTime = tick()
+                        updateProgressBar(tick(), true)
                         return
                     end
 
@@ -25083,10 +25135,7 @@ run(function()
                     local grounded = humanoid.FloorMaterial ~= Enum.Material.Air
                     if grounded then
                         lastGroundTime = now
-                        if not oldy then
-                            tpToggle = true
-                            return
-                        end
+                        tpToggle = true
                     end
 
                     if oldy then
@@ -25096,16 +25145,19 @@ run(function()
                                 root.CFrame.LookVector
                             )
                             oldy = nil
-                            tpToggle = true
+                            tpToggle = false
                         end
+                        updateProgressBar(now, grounded)
                         return
                     end
 
-                    if grounded then
-                        return
+                    if jumpHeld then
+                        local velocity = root.AssemblyLinearVelocity
+                        root.AssemblyLinearVelocity = Vector3.new(velocity.X, JumpVelocity, velocity.Z)
                     end
 
-                    if TP.Enabled and tpToggle and now - lastGroundTime > 2 then
+                    updateProgressBar(now, grounded)
+                    if not grounded and TP.Enabled and tpToggle and now - lastGroundTime >= TPDownDelay then
                         rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera, AntiFallPart}
                         rayCheck.CollisionGroup = root.CollisionGroup
                         local ray = workspace:Raycast(root.Position, Vector3.new(0, -1000, 0), rayCheck)
@@ -25113,6 +25165,7 @@ run(function()
                             oldy = root.Position.Y
                             tpToggle = false
                             tpTick = now + 0.11
+                            updateProgressBar(now, false)
                             root.CFrame = CFrame.lookAlong(
                                 Vector3.new(root.Position.X, ray.Position.Y + humanoid.HipHeight, root.Position.Z),
                                 root.CFrame.LookVector
@@ -25121,6 +25174,7 @@ run(function()
                     end
                 end))
             else
+                jumpHeld = false
                 if oldy and entitylib.isAlive and entitylib.character and entitylib.character.RootPart then
                     local root = entitylib.character.RootPart
                     root.CFrame = CFrame.lookAlong(
@@ -25130,6 +25184,7 @@ run(function()
                 end
                 oldy = nil
                 tpToggle = true
+                destroyProgressBar()
             end
         end
     })
@@ -25137,5 +25192,14 @@ run(function()
     TP = InfiniteJump:CreateToggle({
         Name = "TP Down",
         Default = true
+    })
+    ProgressBar = InfiniteJump:CreateToggle({
+        Name = 'TP Down Progress Bar',
+        Default = true,
+        Function = function(callback)
+            if progressFrame then
+                progressFrame.Visible = callback and InfiniteJump.Enabled and TP.Enabled
+            end
+        end
     })
 end)
