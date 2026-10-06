@@ -910,12 +910,13 @@ function vape:LoadGUI()
 	})
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
-	})
 	mainapi:CreateCategory({
-    Name = 'weird',
+    Name = 'Category Name',
     Icon = getcustomasset('newvape/assets/new/youricon.png'),
     Size = UDim2.fromOffset(18, 18)
 })
+	})
+	
 	--[[
 		Friends
 	]]
