@@ -8059,6 +8059,75 @@ run(function()
 end)
 
 run(function()
+	local HalloweenSkybox
+	local sky
+	local colorCorrection
+	local originalSkies = {}
+	local originalLighting
+
+	HalloweenSkybox = vape.Categories.Render:CreateModule({
+		Name = 'Halloween Skybox',
+		Function = function(callback)
+			if callback then
+				originalLighting = {
+					ClockTime = lightingService.ClockTime,
+					Ambient = lightingService.Ambient,
+					OutdoorAmbient = lightingService.OutdoorAmbient
+				}
+
+				for _, object in lightingService:GetChildren() do
+					if object:IsA('Sky') then
+						table.insert(originalSkies, object)
+						object.Parent = game
+					end
+				end
+
+				sky = Instance.new('Sky')
+				sky.SkyboxBk = 'rbxassetid://149677024'
+				sky.SkyboxFt = 'rbxassetid://149677048'
+				sky.SkyboxLf = 'rbxassetid://149677063'
+				sky.SkyboxRt = 'rbxassetid://149677071'
+				sky.SkyboxDn = 'rbxassetid://149677033'
+				sky.SkyboxUp = 'rbxassetid://149677087'
+				sky.Parent = lightingService
+
+				colorCorrection = Instance.new('ColorCorrectionEffect')
+				colorCorrection.TintColor = Color3.fromRGB(255, 205, 180)
+				colorCorrection.Contrast = 0.08
+				colorCorrection.Saturation = -0.12
+				colorCorrection.Parent = lightingService
+
+				lightingService.ClockTime = 0.5
+				lightingService.Ambient = Color3.fromRGB(65, 38, 56)
+				lightingService.OutdoorAmbient = Color3.fromRGB(35, 37, 62)
+			else
+				if sky then
+					sky:Destroy()
+					sky = nil
+				end
+				if colorCorrection then
+					colorCorrection:Destroy()
+					colorCorrection = nil
+				end
+
+				for _, object in originalSkies do
+					object.Parent = lightingService
+				end
+				table.clear(originalSkies)
+
+				if originalLighting then
+					for property, value in originalLighting do
+						lightingService[property] = value
+					end
+					originalLighting = nil
+				end
+			end
+		end,
+		Tooltip = 'Applies a dark Halloween skybox and lighting.'
+	})
+end)
+
+run(function()
 	local Atmosphere
 	local Toggles = {}
 	local newobjects, oldobjects = {}, {}
@@ -8364,7 +8433,7 @@ run(function()
 					decal:Play()
 				else
 					local decal = Instance.new('ImageLabel')
-					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://14637958134'
+					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://10743809431'
 					decal.Size = UDim2.fromScale(1, 1)
 					decal.BackgroundTransparency = 1
 					decal.Parent = capesurface
@@ -8393,7 +8462,8 @@ run(function()
 		Tooltip = 'Add\'s a cape to your character'
 	})
 	Texture = Cape:CreateTextBox({
-		Name = 'Texture'
+		Name = 'Texture',
+		Default = 'rbxassetid://10743809431'
 	})
 end)
 
