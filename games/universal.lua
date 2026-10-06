@@ -4753,18 +4753,18 @@ run(function()
 
 				atmosphere = Instance.new('Atmosphere')
 				atmosphere.Name = 'VapeScaryAtmosphere'
-				atmosphere.Color = Color3.fromRGB(105, 29, 42)
-				atmosphere.Decay = Color3.fromRGB(28, 8, 18)
-				atmosphere.Density = 0.45
-				atmosphere.Haze = 8
+				atmosphere.Color = Color3.fromRGB(35, 4, 12)
+				atmosphere.Decay = Color3.fromRGB(7, 0, 5)
+				atmosphere.Density = 0.8
+				atmosphere.Haze = 10
 				atmosphere.Glare = 0
 
 				colorCorrection = Instance.new('ColorCorrectionEffect')
 				colorCorrection.Name = 'VapeScaryColorCorrection'
-				colorCorrection.TintColor = Color3.fromRGB(220, 145, 155)
-				colorCorrection.Saturation = -0.35
-				colorCorrection.Contrast = 0.25
-				colorCorrection.Brightness = -0.08
+				colorCorrection.TintColor = Color3.fromRGB(165, 55, 70)
+				colorCorrection.Saturation = -0.65
+				colorCorrection.Contrast = 0.45
+				colorCorrection.Brightness = -0.18
 
 				ScarySkybox:Clean(lightingService.ChildAdded:Connect(function(object)
 					if ScarySkybox.Enabled and object:IsA('Sky') and object ~= sky then

@@ -24959,11 +24959,70 @@ run(function()
     local texture_pack: table = {["Enabled"] = false};
     local texture_pack_color: table = {["Hue"] = 0, ["Sat"] = 0, ["Value"] = 0};
     local texture_pack_m: table = {};
+	local externalTexturePacks = {
+		FirstPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%231',
+		SecondPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%232',
+		ThirdPack = 'https://raw.githubusercontent.com/SnoopyOwner/Modules/main/TexturePack',
+		FourthPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%234',
+		FifthPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%235',
+		SixthPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%236',
+		SeventhPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%237',
+		EighthPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/1024xPack',
+		EgirlPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/E-Girl',
+		CottonCandy = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/CottonCandy256x',
+		Pack512x = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/512xPack',
+		Pack1024x = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/1024xPack',
+		Pack1056x = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/1024xPack',
+		FirstHighResPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/512xPack',
+		SecondHighResPack = 'https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/1024xPack',
+		FatCat = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/FatCat.lua',
+		Simply = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Simply.lua',
+		VioletsDreams = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/VioletsDreams.lua',
+		Enlightened = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Enlightened.lua',
+		Onyx = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Onyx.lua',
+		Fury = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Fury.lua',
+		Wichtiger = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Wichtiger.lua',
+		Makima = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Makima.lua',
+		['Marin-Kitsawaba'] = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Marin-Kitsawaba.lua',
+		Prime = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Prime.lua',
+		Vile = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Vile.lua',
+		Devourer = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Devourer.lua',
+		Acidic = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Acidic.lua',
+		Moon4Real = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Moon4Real.lua',
+		Nebula = 'https://raw.githubusercontent.com/new-qwertyui/TexturePacks/main/Nebula.lua'
+	}
+	local function runExternalTexturePack(name, url)
+		local requestOk, source = pcall(function()
+			return game:HttpGet(url)
+		end)
+		if not requestOk or type(source) ~= 'string' or source == '' or source == '404: Not Found' then
+			notif('TexturePack', 'Failed to download '..name..': '..tostring(source), 8, 'alert')
+			return
+		end
+
+		local compileOk, chunk, compileError = pcall(loadstring, source)
+		if not compileOk or type(chunk) ~= 'function' then
+			notif('TexturePack', 'Failed to compile '..name..': '..tostring(compileError or chunk), 8, 'alert')
+			return
+		end
+
+		local runOk, runError = pcall(chunk)
+		if not runOk then
+			notif('TexturePack', 'Failed to apply '..name..': '..tostring(runError), 8, 'alert')
+		end
+	end
     texture_pack = vape.Categories.Render:CreateModule({
         ["Name"] ='TexturePack',
         ["HoverText"] = 'Customizes the texture pack.',
         ["Function"] = function(callback: boolean): void
             if callback then
+				local packName = texture_pack_m["Value"]
+				local packUrl = externalTexturePacks[packName]
+				if packUrl then
+					task.spawn(runExternalTexturePack, packName, packUrl)
+					return
+				end
+
                 if texture_pack_m["Value"] == 'Velocity' then
 					task.spawn(function()
 						local Players: Players = game:GetService("Players")
@@ -25589,46 +25648,6 @@ run(function()
 							end
 						end)					
 					end)
-				elseif texture_pack_m["Value"] == 'FirstPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%231"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'SecondPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%232"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'ThirdPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/Modules/main/TexturePack"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'FourthPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%234"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'FifthPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%235"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'SixthPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%236"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'SeventhPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/Pack%237"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'EighthPack' then
-					task.spawn(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/1024xPack"))()  
-					end)
-				elseif texture_pack_m["Value"] == 'EgirlPack' then
-					task.spawn(function() 	
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/E-Girl"))()  		             
-					end)
-				elseif texture_pack_m["Value"] == 'CottonCandy' then
-					task.spawn(function() 
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/CottonCandy256x"))()           
-					end)
 				elseif texture_pack_m["Value"] == 'PrivatePack' then
 					task.spawn(function()
 						local Players = game:GetService("Players")
@@ -25817,91 +25836,6 @@ run(function()
 							end
 						end)            
 					end)
-				elseif texture_pack_m["Value"] == 'FirstHighResPack' then	
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/512xPack"))()   
-					end)
-				elseif texture_pack_m["Value"] == 'SecondHighResPack' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/SnoopyOwner/TexturePacks/main/1024xPack"))()   
-					end)
-				elseif texture_pack_m["Value"] == 'FatCat' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/"..Pack.Value..".lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Simply' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Simply.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'VioletsDreams' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/VioletsDreams.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Enlightened' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Enlightened.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Onyx' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Onyx.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Fury' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Fury.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Wichtiger' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Wichtiger.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Makima' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Makima.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Marin-Kitsawaba' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Marin-Kitsawaba.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Prime' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Prime.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Vile' then	
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Vile.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Devourer' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Devourer.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Acidic' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Acidic.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Moon4Real' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Moon4Real.lua"))()
-					end)
-				elseif texture_pack_m["Value"] == 'Nebula' then
-					task.spawn(function()
-						task.wait()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/Nebula.lua"))()
-					end)
 				else
 					local connect: any;
 					local pack: any = game:GetObjects("rbxassetid://14027120450");
@@ -25975,7 +25909,7 @@ run(function()
 			"EgirlPack", 
 			"CottonCandy", 
 			"Pack512x", 
-			"Pack1056x",
+			"Pack1024x",
 	        "PrivatePack",
             'Aquarium',
             'Ocean',
