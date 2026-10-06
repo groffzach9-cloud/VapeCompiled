@@ -25007,7 +25007,7 @@ run(function()
     local progressText
 
     local JumpVelocity = 50 -- fixed jump strength
-    local TPDownDelay = 2.5
+    local TPDownDelay = 1.3
     local tpTick = 0
     local oldy
     local rayCheck = RaycastParams.new()
@@ -25060,7 +25060,7 @@ run(function()
         progressText.BackgroundTransparency = 1
         progressText.Size = UDim2.new(1, 0, 1, 0)
         progressText.Font = Enum.Font.Gotham
-        progressText.Text = 'TP Down in 2.5s'
+        progressText.Text = 'TP Down in 1.3s'
         progressText.TextColor3 = Color3.new(0.9, 0.9, 0.9)
         progressText.TextSize = 16
         progressText.TextStrokeTransparency = 0
