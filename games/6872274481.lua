@@ -8476,9 +8476,6 @@ run(function()
 		if not Animation.Enabled then
 			return
 		end
-		if identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1]) then
-			return
-		end
 
 		task.spawn(function()
 			local started = false
