@@ -4733,11 +4733,26 @@ run(function()
 
 	local function applyOceanSettings()
 		if not terrain then return end
-		terrain.WaterColor = Color3.fromHSV(WaterColor.Hue, WaterColor.Sat, WaterColor.Value)
-		terrain.WaterTransparency = Transparency.Value
-		terrain.WaterReflectance = Reflectance.Value
-		terrain.WaterWaveSize = WaveSize.Value
-		terrain.WaterWaveSpeed = WaveSpeed.Value
+		local success, err = pcall(function()
+			terrain.WaterColor = Color3.fromHSV(WaterColor.Hue, WaterColor.Sat, WaterColor.Value)
+			terrain.WaterTransparency = math.clamp(Transparency.Value, 0, 1)
+			terrain.WaterReflectance = math.clamp(Reflectance.Value, 0, 1)
+			terrain.WaterWaveSize = math.clamp(WaveSize.Value, 0, 1)
+			terrain.WaterWaveSpeed = math.clamp(WaveSpeed.Value, 0, 100)
+		end)
+
+		if not success then
+			if originalSettings then
+				for property, value in originalSettings do
+					terrain[property] = value
+				end
+				originalSettings = nil
+			end
+			if OceanShader.Enabled then
+				OceanShader:Toggle()
+			end
+			vape:CreateNotification('OceanShader', 'Could not apply water settings: '..tostring(err), 8, 'warning')
+		end
 	end
 
 	OceanShader = vape.Categories.Render:CreateModule({
