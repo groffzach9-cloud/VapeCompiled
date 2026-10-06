@@ -4733,6 +4733,7 @@ run(function()
 	local terrain = cloneref(workspace:FindFirstChildOfClass('Terrain'))
 	local originalSettings
 	local terrainWaterFailed = false
+	local surfaceBaseY
 
 	local function applyOceanSettings()
 		if not terrain or terrainWaterFailed then return end
@@ -4770,6 +4771,8 @@ run(function()
 						WaterWaveSpeed = terrain.WaterWaveSpeed
 					}
 				end
+				local root = entitylib.isAlive and entitylib.character.RootPart
+				surfaceBaseY = root and root.Position.Y or gameCamera.CFrame.Position.Y
 				applyOceanSettings()
 				local ocean = Instance.new('Folder')
 				ocean.Name = 'VapeOceanSurface'
@@ -4801,7 +4804,7 @@ run(function()
 					local tileSize = SurfaceSize.Value / tileCount
 					local baseX = math.floor(center.X / tileSize) * tileSize
 					local baseZ = math.floor(center.Z / tileSize) * tileSize
-					local baseY = center.Y - Depth.Value
+					local baseY = surfaceBaseY - Depth.Value
 					local now = os.clock()
 					local speed = WaveSpeed.Value * (math.pi * 2 / 60)
 					local waveHeight = WaveSize.Value
