@@ -908,6 +908,7 @@ function vape:LoadGUI()
 		Icon = getvapeasset('newvape/assets/new/inventory.png'),
 		Size = UDim2.fromOffset(15, 14)
 	})
+	vape.Categories.Minigames = vape.Categories.World
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
