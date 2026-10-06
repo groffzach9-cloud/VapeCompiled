@@ -912,7 +912,7 @@ function vape:LoadGUI()
 		Text = 'misc'
 	})
 	mainapi:CreateCategory({
-    Name = 'weird',
+    Text = 'weird'
     Icon = getcustomasset('newvape/assets/new/youricon.png'),
     Size = UDim2.fromOffset(18, 18)
 })
