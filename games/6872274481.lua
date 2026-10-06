@@ -8459,8 +8459,9 @@ run(function()
 					if ready and first and handReady(sword) then
 						if hitCandidate then
 							if airHitAllowed(hitCandidate) and hitTarget(hitCandidate, sword) then
+								local sentAt = bedwars.SwordController.lastAttack or workspace:GetServerTimeNow()
 								kaLastSend = tick()
-								kaNextSend = now + delay
+								kaNextSend = math.max(kaNextSend, sentAt + delay)
 								nextSwingMiss = kaNextSend
 							end
 						elseif not LegitAura.Enabled and now >= nextSwingMiss then
