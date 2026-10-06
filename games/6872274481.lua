@@ -25011,6 +25011,44 @@ run(function()
 			notif('TexturePack', 'Failed to apply '..name..': '..tostring(runError), 8, 'alert')
 		end
 	end
+	local function loadTexturePackAsset(assetId, packName)
+		local loadOk, objects = pcall(game.GetObjects, game, 'rbxassetid://'..assetId)
+		if not loadOk or type(objects) ~= 'table' or not objects[1] then
+			notif('TexturePack', 'Failed to load '..packName..' sword models: '..tostring(objects), 8, 'alert')
+			return
+		end
+		return objects[1]
+	end
+	local function connectViewmodelItems(viewmodel, callback)
+		local processed = {}
+		local function apply(item)
+			if processed[item] then
+				return
+			end
+			processed[item] = true
+			callback(item)
+		end
+
+		texture_pack:Clean(viewmodel.ChildAdded:Connect(apply))
+		for _, item in viewmodel:GetChildren() do
+			apply(item)
+		end
+	end
+	local function connectViewmodelDescendants(viewmodel, callback)
+		local processed = {}
+		local function apply(item)
+			if processed[item] then
+				return
+			end
+			processed[item] = true
+			callback(item)
+		end
+
+		texture_pack:Clean(viewmodel.DescendantAdded:Connect(apply))
+		for _, item in viewmodel:GetDescendants() do
+			apply(item)
+		end
+	end
     texture_pack = vape.Categories.Render:CreateModule({
         ["Name"] ='TexturePack',
         ["HoverText"] = 'Customizes the texture pack.',
@@ -25028,8 +25066,8 @@ run(function()
 						local Players: Players = game:GetService("Players")
 						local ReplicatedStorage: ReplicatedStorage = game:GetService("ReplicatedStorage")
 						local Workspace: Workspace = game:GetService("Workspace")
-						local objs: any = game:GetObjects("rbxassetid://13988978091")
-						local import: any = objs[1]
+						local import: any = loadTexturePackAsset('13988978091', 'Velocity')
+						if not import then return end
 						import.Parent = game:GetService("ReplicatedStorage")
 						local index: table? = {
 							{
@@ -25098,7 +25136,7 @@ run(function()
 								model = import:WaitForChild("Diamond_Axe"),
 							},
 						}
-						local func = Workspace.Camera.Viewmodel.ChildAdded:Connect(function(tool)
+						connectViewmodelItems(Workspace.Camera.Viewmodel, function(tool)
 							if not tool:IsA("Accessory") then
 								return
 							end
@@ -25135,8 +25173,8 @@ run(function()
 						local Players = game:GetService("Players")
 						local ReplicatedStorage = game:GetService("ReplicatedStorage")
 						local Workspace = game:GetService("Workspace")
-						local objs = game:GetObjects("rbxassetid://14217388022")
-						local import = objs[1]
+						local import = loadTexturePackAsset('14217388022', 'Aquarium')
+						if not import then return end
 						import.Parent = game:GetService("ReplicatedStorage")
 						local index = {
 						
@@ -25176,7 +25214,7 @@ run(function()
 								model = import:WaitForChild("Diamond_Sword"),
 							},
 						}
-						local func = Workspace:WaitForChild("Camera").Viewmodel.ChildAdded:Connect(function(tool)
+						connectViewmodelItems(Workspace:WaitForChild("Camera").Viewmodel, function(tool)
 							if(not tool:IsA("Accessory")) then return end
 							for i,v in pairs(index) do
 								if(v.name == tool.Name) then
@@ -25216,8 +25254,8 @@ run(function()
 						local Players = game:GetService("Players")
 						local ReplicatedStorage = game:GetService("ReplicatedStorage")
 						local Workspace = game:GetService("Workspace")
-						local objs = game:GetObjects("rbxassetid://14356045010")
-						local import = objs[1]
+						local import = loadTexturePackAsset('14356045010', 'Ocean')
+						if not import then return end
 						import.Parent = game:GetService("ReplicatedStorage")
 						index = {
 							{
@@ -25320,7 +25358,7 @@ run(function()
 						
 						
 						}
-						local func = Workspace:WaitForChild("Camera").Viewmodel.ChildAdded:Connect(function(tool)
+						connectViewmodelItems(Workspace:WaitForChild("Camera").Viewmodel, function(tool)
 							if(not tool:IsA("Accessory")) then return end
 							for i,v in pairs(index) do
 								if(v.name == tool.Name) then
@@ -25357,7 +25395,7 @@ run(function()
 					end)
                 elseif texture_pack_m["Value"] == 'Animated' then
                     task.spawn(function()
-                        workspace:WaitForChild("Camera").Viewmodel.ChildAdded:Connect(function(tool)
+                        connectViewmodelItems(workspace:WaitForChild("Camera").Viewmodel, function(tool)
                             if not tool:IsA("Accessory") then 
                                 return 
                             end
@@ -25390,8 +25428,8 @@ run(function()
 						local Players = game:GetService("Players")
 						local ReplicatedStorage = game:GetService("ReplicatedStorage")
 						local Workspace = game:GetService("Workspace")
-						local objs = game:GetObjects("rbxassetid://14241215869")
-						local import = objs[1]
+						local import = loadTexturePackAsset('14241215869', 'Demon Slayer')
+						if not import then return end
 						import.Parent = ReplicatedStorage
 						local index = {
 							{
@@ -25505,7 +25543,7 @@ run(function()
 								model = import:WaitForChild("Diamond_Sword"),
 							},
 						}
-						local func = Workspace.Camera.Viewmodel.ChildAdded:Connect(function(tool)	
+						connectViewmodelItems(Workspace.Camera.Viewmodel, function(tool)
 							if not tool:IsA("Accessory") then return end	
 							for _, v in ipairs(index) do	
 								if v.name == tool.Name then		
@@ -25575,8 +25613,8 @@ run(function()
 						local Players = game:GetService("Players")
 						local ReplicatedStorage = game:GetService("ReplicatedStorage")
 						local Workspace = game:GetService("Workspace")
-						local objs = game:GetObjects("rbxassetid://13804645310")
-						local import = objs[1]
+						local import = loadTexturePackAsset('13804645310', 'Glizzy')
+						if not import then return end
 						import.Parent = game:GetService("ReplicatedStorage")
 						
 						local index = {
@@ -25612,7 +25650,7 @@ run(function()
 							},
 						}
 						
-						local func = Workspace:WaitForChild("Camera").Viewmodel.ChildAdded:Connect(function(tool)
+						connectViewmodelItems(Workspace:WaitForChild("Camera").Viewmodel, function(tool)
 							if not tool:IsA("Accessory") then return end
 							for _,v in pairs(index) do
 								if v.name == tool.Name then
@@ -25653,8 +25691,8 @@ run(function()
 						local Players = game:GetService("Players")
 						local ReplicatedStorage = game:GetService("ReplicatedStorage")
 						local Workspace = game:GetService("Workspace")
-						local objs = game:GetObjects("rbxassetid://14161283331")
-						local import = objs[1]
+						local import = loadTexturePackAsset('14161283331', 'PrivatePack')
+						if not import then return end
 						import.Parent = ReplicatedStorage
 						local index = {
 							{
@@ -25773,7 +25811,7 @@ run(function()
 								model = import:WaitForChild("Bow"),
 							},
 						}
-						local func = Workspace.Camera.Viewmodel.ChildAdded:Connect(function(tool)	
+						connectViewmodelItems(Workspace.Camera.Viewmodel, function(tool)
 							if not tool:IsA("Accessory") then return end	
 							for _, v in ipairs(index) do	
 								if v.name == tool.Name then		
@@ -25837,11 +25875,10 @@ run(function()
 						end)            
 					end)
 				else
-					local connect: any;
-					local pack: any = game:GetObjects("rbxassetid://14027120450");
-					local txtpack: any = unpack(pack)
+					local txtpack: any = loadTexturePackAsset('14027120450', tostring(texture_pack_m.Value))
+					if not txtpack then return end
 					txtpack.Parent = game:GetService("ReplicatedStorage")
-					connect = workspace.Camera.Viewmodel.DescendantAdded:Connect(function(d)
+					connectViewmodelDescendants(workspace.Camera.Viewmodel, function(d)
 						for i,v in next, txtpack:GetChildren() do
 							if v.Name == d.Name then
 								for i1,v1 in next, d:GetDescendants() do
