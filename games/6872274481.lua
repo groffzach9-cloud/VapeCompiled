@@ -25019,7 +25019,7 @@ run(function()
         if not progressFrame then
             return
         end
-        local visible = ProgressBar and ProgressBar.Enabled and TP and TP.Enabled and entitylib.isAlive and not grounded and tpToggle
+        local visible = ProgressBar and ProgressBar.Enabled and TP and TP.Enabled and entitylib.isAlive and jumpHeld and not grounded and tpToggle
         progressFrame.Visible = visible
         if not visible then
             return
@@ -25145,7 +25145,8 @@ run(function()
                                 root.CFrame.LookVector
                             )
                             oldy = nil
-                            tpToggle = false
+                            tpToggle = true
+                            lastGroundTime = now
                         end
                         updateProgressBar(now, grounded)
                         return
@@ -25157,7 +25158,7 @@ run(function()
                     end
 
                     updateProgressBar(now, grounded)
-                    if not grounded and TP.Enabled and tpToggle and now - lastGroundTime >= TPDownDelay then
+                    if jumpHeld and not grounded and TP.Enabled and tpToggle and now - lastGroundTime >= TPDownDelay then
                         rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera, AntiFallPart}
                         rayCheck.CollisionGroup = root.CollisionGroup
                         local ray = workspace:Raycast(root.Position, Vector3.new(0, -1000, 0), rayCheck)
