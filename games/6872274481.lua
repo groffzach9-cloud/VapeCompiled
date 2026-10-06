@@ -5295,7 +5295,6 @@ run(function()
     local WallCheck
     local PopBalloons
     local TP
-    local lastonground = false
     local MobileButtons
     local FlyAnywayProgressBar = {Enabled = false}
     local FlyAnywayProgressBarFrame
@@ -5305,9 +5304,6 @@ run(function()
     local up, down, old = 0, 0
     local mobileControls = {}
     local groundtime = nil
-    local onground = false
-    local flyCooldownActive = false
-    local lastGroundTouchTime = 0
     local MAX_FLY_TIME = 2.5
     local tick = tick
     local task_wait = task.wait
@@ -5353,8 +5349,6 @@ run(function()
         mobileControls = {}
     end
 
-    local progressBarFrameCounter = 0
-    local MAX_FRAME_COUNTER = 600
     local function updateProgressBar()
         if not FlyAnywayProgressBarFrame then return end
 
@@ -5375,50 +5369,30 @@ run(function()
         if flyAllowed then
             FlyAnywayProgressBarFrame.Frame.Size = udim2new(1, 0, 0, 20)
             FlyAnywayProgressBarFrame.TextLabel.Text = "∞"
-            FlyAnywayProgressBarFrame.Visible = FlyAnywayProgressBar.Enabled
+            FlyAnywayProgressBarFrame.Visible = FlyAnywayProgressBar.Enabled and Fly.Enabled
             return
         end
         
-        progressBarFrameCounter = (progressBarFrameCounter + 1) % MAX_FRAME_COUNTER
-        if progressBarFrameCounter % 3 == 0 then
-            local hipHeight = entitylib.character.Humanoid.HipHeight
-            local checkPos = entitylib.character.HumanoidRootPart.Position + vector3new(0, (hipHeight * -2) - 1, 0)
-            local newray = getPlacedBlock(checkPos)
-            onground = newray ~= nil
-        end
-        
+        local humanoid = entitylib.character.Humanoid
+        local onground = humanoid.FloorMaterial ~= Enum.Material.Air
+
         if onground then
             groundtime = nil
-            flyCooldownActive = false
-            lastGroundTouchTime = now
-            
             FlyAnywayProgressBarFrame.Frame.Size = udim2new(1, 0, 0, 20)
             FlyAnywayProgressBarFrame.TextLabel.Text = string_format("%.1fs", MAX_FLY_TIME)
             FlyAnywayProgressBarFrame.Visible = FlyAnywayProgressBar.Enabled and Fly.Enabled
-            
-            local tween = FlyAnywayProgressBarFrame.Frame:FindFirstChild("Tween")
-            if tween then
-                tween:Destroy()
-            end
         else
             if not groundtime then
                 groundtime = now + MAX_FLY_TIME
-                flyCooldownActive = false
             end
             
-            local timeLeft = math_max(0, groundtime - now)
-            local progress = timeLeft / MAX_FLY_TIME
+            local timeLeft = math.clamp(groundtime - now, 0, MAX_FLY_TIME)
+            local progress = math.clamp(timeLeft / MAX_FLY_TIME, 0, 1)
             
             FlyAnywayProgressBarFrame.Frame.Size = udim2new(progress, 0, 0, 20)
             FlyAnywayProgressBarFrame.TextLabel.Text = string_format("%.1fs", timeLeft)
             FlyAnywayProgressBarFrame.Visible = FlyAnywayProgressBar.Enabled and Fly.Enabled
-            
-            if timeLeft <= 0 and not flyCooldownActive then
-                flyCooldownActive = true
-            end
         end
-        
-        lastonground = onground
     end
 
     Fly = vape.Categories.Blatant:CreateModule({
@@ -5597,9 +5571,7 @@ run(function()
                 if FlyAnywayProgressBarFrame then
                     FlyAnywayProgressBarFrame.Visible = false
                 end
-                lastonground = nil
                 groundtime = nil
-                flyCooldownActive = false
                 bedwars.BalloonController.deflateBalloon = old
                 if PopBalloons.Enabled and entitylib.isAlive and (lplr.Character:GetAttribute('InflatedBalloons') or 0) > 0 then
                     for _ = 1, 3 do
@@ -5667,7 +5639,7 @@ run(function()
                 FlyAnywayProgressBarFrame2.Size = udim2new(1, 0, 0, 20)
                 FlyAnywayProgressBarFrame2.BackgroundTransparency = 0
                 FlyAnywayProgressBarFrame2.BorderSizePixel = 0
-                FlyAnywayProgressBarFrame2.BackgroundColor3 = BarColor and Color3.fromHSV(BarColor.H, BarColor.S, BarColor.V) or Color3.fromHSV(vape.GUIColor.Hue, vape.GUIColor.Sat, vape.GUIColor.Value)
+                FlyAnywayProgressBarFrame2.BackgroundColor3 = BarColor and Color3.fromHSV(BarColor.Hue, BarColor.Sat, BarColor.Value) or Color3.fromHSV(vape.GUIColor.Hue, vape.GUIColor.Sat, vape.GUIColor.Value)
                 FlyAnywayProgressBarFrame2.Visible = true
                 FlyAnywayProgressBarFrame2.Parent = FlyAnywayProgressBarFrame
                 

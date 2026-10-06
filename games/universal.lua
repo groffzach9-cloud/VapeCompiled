@@ -4779,8 +4779,15 @@ run(function()
 				ocean.Parent = workspace
 				OceanShader:Clean(ocean)
 
-				local tileCount = 9
+				local tileCount = 15
 				local tiles = table.create(tileCount * tileCount)
+				local function sampleWave(x, z, time, speed, height)
+					return height * (
+						math.sin((x + z * 0.36) * 0.018 + time * speed) * 0.5
+						+ math.sin((x * 0.72 - z) * 0.032 - time * speed * 0.73) * 0.3
+						+ math.sin((x - z * 0.62) * 0.055 + time * speed * 1.17) * 0.14
+					)
+				end
 				for x = 1, tileCount do
 					for z = 1, tileCount do
 						local tile = Instance.new('Part')
@@ -4793,12 +4800,18 @@ run(function()
 						tile.Material = Enum.Material.Glass
 						tile.TopSurface = Enum.SurfaceType.Smooth
 						tile.BottomSurface = Enum.SurfaceType.Smooth
+						tile.Size = Vector3.new(1, 0.15, 1)
 						tile.Parent = ocean
-						tiles[#tiles + 1] = {Part = tile, X = x - 5, Z = z - 5}
+						tiles[#tiles + 1] = {Part = tile, X = x - 8, Z = z - 8}
 					end
 				end
 
-				OceanShader:Clean(runService.RenderStepped:Connect(function()
+				local elapsed = 0
+				OceanShader:Clean(runService.RenderStepped:Connect(function(dt)
+					elapsed += dt
+					if elapsed < 1 / 30 then return end
+					elapsed %= 1 / 30
+
 					local root = entitylib.isAlive and entitylib.character.RootPart
 					local center = root and root.Position or gameCamera.CFrame.Position
 					local tileSize = SurfaceSize.Value / tileCount
@@ -4806,19 +4819,29 @@ run(function()
 					local baseZ = math.floor(center.Z / tileSize) * tileSize
 					local baseY = surfaceBaseY - Depth.Value
 					local now = os.clock()
-					local speed = WaveSpeed.Value * (math.pi * 2 / 60)
+					local speed = WaveSpeed.Value * 0.02
 					local waveHeight = WaveSize.Value
 					local color = Color3.fromHSV(WaterColor.Hue, WaterColor.Sat, WaterColor.Value)
 
 					for _, data in tiles do
 						local x = baseX + (data.X * tileSize)
 						local z = baseZ + (data.Z * tileSize)
-						local wave = math.sin(x * 0.012 + now * speed)
-							* math.cos(z * 0.009 - now * speed * 0.75)
-							* waveHeight
+						local wave = sampleWave(x, z, now, speed, waveHeight)
+						local sampleDistance = 3
+						local slopeX = (
+							sampleWave(x + sampleDistance, z, now, speed, waveHeight)
+							- sampleWave(x - sampleDistance, z, now, speed, waveHeight)
+						) / (sampleDistance * 2)
+						local slopeZ = (
+							sampleWave(x, z + sampleDistance, now, speed, waveHeight)
+							- sampleWave(x, z - sampleDistance, now, speed, waveHeight)
+						) / (sampleDistance * 2)
+						local normal = Vector3.new(-slopeX, 1, -slopeZ).Unit
+						local right = (Vector3.xAxis - normal * normal.X).Unit
+						local back = right:Cross(normal).Unit
 						local tile = data.Part
-						tile.Size = Vector3.new(tileSize + 0.1, 3, tileSize + 0.1)
-						tile.Position = Vector3.new(x, baseY + wave, z)
+						tile.Size = Vector3.new(tileSize + 1, 0.15, tileSize + 1)
+						tile.CFrame = CFrame.fromMatrix(Vector3.new(x, baseY + wave, z), right, normal, back)
 						tile.Color = color
 						tile.Transparency = math.clamp(Transparency.Value, 0, 1)
 						tile.Reflectance = math.clamp(Reflectance.Value, 0, 1)
