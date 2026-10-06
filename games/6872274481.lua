@@ -24908,7 +24908,7 @@ run(function()
 end)
 run(function()
 	local SliasIFRame
-	SliasIFRame = vape.Categories.Blatent:CreateModule({
+	SliasIFRame = vape.Categories.Utility:CreateModule({
 		Name = "Silas I-Frame",
 		Tooltip = 'allows you to swing ur sword when using ability on silas',
 		Function = function(callback)
