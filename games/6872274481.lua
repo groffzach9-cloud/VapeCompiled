@@ -16918,7 +16918,21 @@ run(function()
 	end
 	
 	local function getScaffoldBlock()
-		return getScaffoldBlockForModule(LimitItem)
+		if store.hand.toolType == 'block' then
+			return store.hand.tool.Name, store.hand.amount
+		elseif not LimitItem.Enabled then
+			local wool, amount = getWool()
+			if wool then
+				return wool, amount
+			end
+			for _, item in store.inventory.inventory.items do
+				local meta = bedwars.ItemMeta[item.itemType]
+				if meta and meta.block then
+					return item.itemType, item.amount
+				end
+			end
+		end
+		return nil, 0
 	end
 	
 	Scaffold = vape.Categories.Utility:CreateModule({
