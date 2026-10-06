@@ -1168,7 +1168,7 @@ function vape:LoadGUI()
 	guipane:CreateToggle({
 		Name = 'GUI bind indicator',
 		Default = true,
-		Tooltip = "Displays a message indicating your GUI upon injecting.\nI.E. 'Press RSHIFT to open GUI'"
+		Tooltip = "Displays a message indicating your GUI upon injecting.\nI.E. 'Press RSHIFT to open GUI then slime niggas out'"
 	})
 	
 	guipane:CreateToggle({
