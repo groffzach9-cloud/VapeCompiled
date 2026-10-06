@@ -911,11 +911,7 @@ function vape:LoadGUI()
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
-	vape:CreateCategory({
-		Name = 'weird stuff',
-		Icon = getvapeasset('newvape/assets/new/combat.png'),
-		Size = UDim2.fromOffset(13, 14)
-	})
+	
 
 	
 	--[[
