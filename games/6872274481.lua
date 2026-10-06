@@ -6999,7 +6999,7 @@ run(function()
 	end
 
 	local function getAttackDelay(spd, meta)
-		return spd * furyMultiplier(meta)
+		return spd * furyMultiplier(meta) * 0.9
 	end
 
 	local function fhWindowOpen(ent, meleeRange, cost)
