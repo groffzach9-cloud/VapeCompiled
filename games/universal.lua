@@ -7156,6 +7156,8 @@ run(function()
 	local rainstormGui
 	local rainstormSound
 	local rainstormConnection
+	local oceanFolder
+	local oceanConnection
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
@@ -7300,6 +7302,93 @@ run(function()
 			end
 		end
 	end
+
+	local function setOcean(enabled)
+		if enabled and not oceanFolder then
+			oceanFolder = Instance.new('Folder')
+			oceanFolder.Name = 'VapeOcean'
+			oceanFolder.Parent = workspace
+
+			local tiles = {}
+			local tileSize = 48
+			for x = -2, 2 do
+				for z = -2, 2 do
+					local tile = Instance.new('Part')
+					tile.Name = 'OceanWave'
+					tile.Anchored = true
+					tile.CanCollide = false
+					tile.CanQuery = false
+					tile.CanTouch = false
+					tile.Material = Enum.Material.Water
+					tile.Color = Color3.fromRGB(20, 91, 130)
+					tile.Transparency = 0.18
+					tile.Reflectance = 0.12
+					tile.Size = Vector3.new(tileSize + 0.15, 0.35, tileSize + 0.15)
+					tile.Parent = oceanFolder
+					table.insert(tiles, {Object = tile, OffsetX = x, OffsetZ = z})
+				end
+			end
+
+			local foam = {}
+			for index = 1, 16 do
+				local crest = Instance.new('Part')
+				crest.Name = 'OceanFoam'
+				crest.Anchored = true
+				crest.CanCollide = false
+				crest.CanQuery = false
+				crest.CanTouch = false
+				crest.Material = Enum.Material.SmoothPlastic
+				crest.Color = Color3.fromRGB(205, 231, 236)
+				crest.Transparency = 0.48
+				crest.Size = Vector3.new(math.random(5, 13), 0.045, math.random(1, 2))
+				crest.Parent = oceanFolder
+				table.insert(foam, {
+					Object = crest,
+					OffsetX = math.random(-105, 105),
+					OffsetZ = math.random(-105, 105),
+					Phase = index * 0.8
+				})
+			end
+
+			local elapsed = 0
+			local rayParams = RaycastParams.new()
+			rayParams.FilterType = Enum.RaycastFilterType.Exclude
+			oceanConnection = runService.RenderStepped:Connect(function(dt)
+				elapsed += dt
+				local character = lplr.Character
+				local root = character and character:FindFirstChild('HumanoidRootPart')
+				if not root then return end
+
+				local centerX = math.floor(root.Position.X / tileSize + 0.5) * tileSize
+				local centerZ = math.floor(root.Position.Z / tileSize + 0.5) * tileSize
+				rayParams.FilterDescendantsInstances = {character, oceanFolder}
+				local ground = workspace:Raycast(root.Position + Vector3.new(0, 32, 0), Vector3.new(0, -256, 0), rayParams)
+				local baseY = ground and ground.Position.Y + 0.25 or root.Position.Y - 5
+
+				for _, tile in tiles do
+					local x = centerX + tile.OffsetX * tileSize
+					local z = centerZ + tile.OffsetZ * tileSize
+					local wave = math.sin(x * 0.025 + elapsed * 1.4) * 0.28 + math.cos(z * 0.03 - elapsed) * 0.2
+					tile.Object.CFrame = CFrame.new(x, baseY + wave, z)
+				end
+
+				for _, crest in foam do
+					local x = centerX + crest.OffsetX
+					local z = centerZ + crest.OffsetZ
+					local wave = math.sin(x * 0.025 + elapsed * 1.4) * 0.28 + math.cos(z * 0.03 - elapsed) * 0.2
+					crest.Object.CFrame = CFrame.new(x, baseY + wave + 0.21, z) * CFrame.Angles(0, math.sin(elapsed + crest.Phase) * 0.12, 0)
+					crest.Object.Transparency = 0.42 + math.sin(elapsed * 1.5 + crest.Phase) * 0.12
+				end
+			end)
+		elseif not enabled and oceanFolder then
+			if oceanConnection then
+				oceanConnection:Disconnect()
+				oceanConnection = nil
+			end
+			oceanFolder:Destroy()
+			oceanFolder = nil
+		end
+	end
 	
 	local function applyFlags(data)
 		if type(data) ~= 'table' then
@@ -7320,6 +7409,10 @@ run(function()
 				continue
 			elseif key:lower():gsub('[%s_%-]', '') == 'rainstorm' then
 				setRainstorm(value == true or tostring(value):lower() == 'true' or value == 1)
+				count += 1
+				continue
+			elseif key:lower():gsub('[%s_%-]', '') == 'ocean' then
+				setOcean(value == true or tostring(value):lower() == 'true' or value == 1)
 				count += 1
 				continue
 			end
@@ -7371,6 +7464,7 @@ run(function()
 			vape:CreateNotification('Rainstorm', 'Could not restore FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
 		setRainstorm(false)
+		setOcean(false)
 		setGreySky(false)
 		applied = {}
 		captured = {}
@@ -7396,11 +7490,11 @@ run(function()
 				restoreFlags()
 			end
 		end,
-		Tooltip = 'Apply Roblox FFlags or use the built-in Rainstorm and GreySky effects'
+		Tooltip = 'Apply Roblox FFlags or use the built-in Rainstorm, GreySky and Ocean effects'
 	})
 	JSONBox = RainstormModule:CreateTextBox({
 		Name = 'FFlags',
-		Placeholder = '{"Rainstorm":true}',
+		Placeholder = '{"Rainstorm":true,"Ocean":true}',
 		Function = function(enter)
 			if enter and RainstormModule.Enabled then
 				local success, data = pcall(function()
