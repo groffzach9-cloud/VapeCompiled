@@ -12,13 +12,13 @@ local run = function(func)
 		local ok, err = pcall(func)
 		_runBusy = false
 		if not ok then
-			warn('[aerov4] module failed to load: ' .. tostring(err))
+			warn('[niggawear] module failed to load: ' .. tostring(err))
 		end
 		return
 	end
 	local ok, err = pcall(func)
 	if not ok then
-		warn('[aerov4] module failed to load: ' .. tostring(err))
+		warn('[niggawear] module failed to load: ' .. tostring(err))
 	end
 end
 task.wait()
@@ -26175,4 +26175,52 @@ run(function()
             end
         end
     })
-end)						
+end)	
+run(function()
+	local Ambience2 = vape.Categories.Render:CreateModule({
+		Name = "Ambience 2",
+		Function = function(callback)
+			local lighting = game:GetService("Lighting")
+			if callback then
+				local sky = Instance.new("Sky")
+				sky.Name = "Ambience2_Sky"
+				local id = "rbxassetid://121826915456627"
+				sky.SkyboxBk = id
+				sky.SkyboxDn = id
+				sky.SkyboxFt = id
+				sky.SkyboxLf = id
+				sky.SkyboxRt = id
+				sky.SkyboxUp = id
+				sky.Parent = lighting
+			else
+				local sky = lighting:FindFirstChild("Ambience2_Sky")
+				if sky then sky:Destroy() end
+			end
+		end,
+		Tooltip = "Ambience 2"
+	})
+end)
+run(function()
+	local Ambience1 = vape.Categories.Render:CreateModule({
+		Name = "Ambience 1",
+		Function = function(callback)
+			local lighting = game:GetService("Lighting")
+			if callback then
+				local sky = Instance.new("Sky")
+				sky.Name = "Ambience1_Sky"
+				local id = "rbxassetid://122785120445164"
+				sky.SkyboxBk = id
+				sky.SkyboxDn = id
+				sky.SkyboxFt = id
+				sky.SkyboxLf = id
+				sky.SkyboxRt = id
+				sky.SkyboxUp = id
+				sky.Parent = lighting
+			else
+				local sky = lighting:FindFirstChild("Ambience1_Sky")
+				if sky then sky:Destroy() end
+			end
+		end,
+		Tooltip = "Ambience 1"
+	})
+end)
