@@ -7153,11 +7153,10 @@ run(function()
 	local captured = {}
 	local greySkyAtmosphere
 	local originalAtmospheres = {}
-	local defaultFlags = '{"GreySky":true}'
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
-			JSONBox:SetValue(defaultFlags)
+			return {}
 		end
 		return httpService:JSONDecode(JSONBox.Value)
 	end
@@ -7285,7 +7284,6 @@ run(function()
 	})
 	JSONBox = FFlagEditor:CreateTextBox({
 		Name = 'FFlags',
-		Default = defaultFlags,
 		Placeholder = '{"FlagName":"value"}',
 		Function = function(enter)
 			if enter and FFlagEditor.Enabled then
