@@ -7161,8 +7161,10 @@ run(function()
 	local oceanSound
 	local oceanColorCorrection
 	local oceanBloom
+	local oceanSunRays
 	local oceanTerrain
 	local originalOceanSettings
+	local originalOceanLighting
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
@@ -7314,6 +7316,19 @@ run(function()
 			oceanFolder.Name = 'VapeOcean'
 			oceanFolder.Parent = workspace
 
+			originalOceanLighting = {
+				Ambient = lightingService.Ambient,
+				OutdoorAmbient = lightingService.OutdoorAmbient,
+				EnvironmentDiffuseScale = lightingService.EnvironmentDiffuseScale,
+				EnvironmentSpecularScale = lightingService.EnvironmentSpecularScale,
+				GlobalShadows = lightingService.GlobalShadows
+			}
+			lightingService.Ambient = Color3.fromRGB(62, 82, 94)
+			lightingService.OutdoorAmbient = Color3.fromRGB(105, 132, 145)
+			lightingService.EnvironmentDiffuseScale = 1
+			lightingService.EnvironmentSpecularScale = 1
+			lightingService.GlobalShadows = true
+
 			oceanTerrain = workspace:FindFirstChildWhichIsA('Terrain')
 			if oceanTerrain then
 				originalOceanSettings = {
@@ -7332,18 +7347,24 @@ run(function()
 
 			oceanColorCorrection = Instance.new('ColorCorrectionEffect')
 			oceanColorCorrection.Name = 'VapeOceanColor'
-			oceanColorCorrection.TintColor = Color3.fromRGB(205, 230, 238)
-			oceanColorCorrection.Saturation = 0.08
-			oceanColorCorrection.Contrast = 0.06
-			oceanColorCorrection.Brightness = -0.015
+			oceanColorCorrection.TintColor = Color3.fromRGB(195, 224, 235)
+			oceanColorCorrection.Saturation = 0.12
+			oceanColorCorrection.Contrast = 0.08
+			oceanColorCorrection.Brightness = -0.02
 			oceanColorCorrection.Parent = lightingService
 
 			oceanBloom = Instance.new('BloomEffect')
 			oceanBloom.Name = 'VapeOceanBloom'
-			oceanBloom.Intensity = 0.22
-			oceanBloom.Size = 18
-			oceanBloom.Threshold = 1.8
+			oceanBloom.Intensity = 0.28
+			oceanBloom.Size = 24
+			oceanBloom.Threshold = 1.65
 			oceanBloom.Parent = lightingService
+
+			oceanSunRays = Instance.new('SunRaysEffect')
+			oceanSunRays.Name = 'VapeOceanSunRays'
+			oceanSunRays.Intensity = 0.06
+			oceanSunRays.Spread = 0.65
+			oceanSunRays.Parent = lightingService
 
 			oceanSound = Instance.new('Sound')
 			oceanSound.Name = 'VapeOceanWaves'
@@ -7449,12 +7470,22 @@ run(function()
 				oceanBloom:Destroy()
 				oceanBloom = nil
 			end
+			if oceanSunRays then
+				oceanSunRays:Destroy()
+				oceanSunRays = nil
+			end
 			if oceanTerrain and originalOceanSettings then
 				for property, value in originalOceanSettings do
 					oceanTerrain[property] = value
 				end
 				oceanTerrain = nil
 				originalOceanSettings = nil
+			end
+			if originalOceanLighting then
+				for property, value in originalOceanLighting do
+					lightingService[property] = value
+				end
+				originalOceanLighting = nil
 			end
 		end
 	end
