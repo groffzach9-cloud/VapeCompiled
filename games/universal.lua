@@ -7150,6 +7150,14 @@ run(function()
 	local FFlagEditor
 	local JSONBox
 	local applied = {}
+	local defaultFlags = '{"FFlagDebugSkyGray":"True","DFIntTaskSchedulerTargetFps":"9999","DFFlagTextureQualityOverrideEnabled":"True","DFIntTextureQualityOverride":"0","FIntRenderShadowIntensity":"0","FFlagDisablePostFx":"True"}'
+
+	local function decodeFlags()
+		if JSONBox.Value:match('^%s*$') then
+			JSONBox:SetValue(defaultFlags)
+		end
+		return httpService:JSONDecode(JSONBox.Value)
+	end
 	
 	local function applyFlags(data)
 		if type(data) ~= 'table' then
@@ -7184,10 +7192,10 @@ run(function()
 		Function = function(callback)
 			if callback then
 				local success, data = pcall(function()
-					return httpService:JSONDecode(JSONBox.Value)
+					return decodeFlags()
 				end)
 				if not success then
-					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..(data or 'unknown error'), 5, 'alert')
+					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..tostring(data), 5, 'alert')
 					FFlagEditor:Toggle()
 					return
 				end
@@ -7203,15 +7211,15 @@ run(function()
 	})
 	JSONBox = FFlagEditor:CreateTextBox({
 		Name = 'FFlags',
-		Default = '{"FFlagDebugSkyGray":"True","DFIntTaskSchedulerTargetFps":"9999","DFFlagTextureQualityOverrideEnabled":"True","DFIntTextureQualityOverride":"0","FIntRenderShadowIntensity":"0","FFlagDisablePostFx":"True"}',
+		Default = defaultFlags,
 		Placeholder = '{"FlagName":"value"}',
 		Function = function(enter)
 			if enter and FFlagEditor.Enabled then
 				local success, data = pcall(function()
-					return httpService:JSONDecode(JSONBox.Value)
+					return decodeFlags()
 				end)
 				if not success then
-					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..(data or 'unknown error'), 5, 'alert')
+					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..tostring(data), 5, 'alert')
 					return
 				end
 				applyFlags(data)
