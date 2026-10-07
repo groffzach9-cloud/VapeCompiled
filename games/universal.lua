@@ -8389,8 +8389,18 @@ end)
 run(function()
 	local Cape
 	local Texture
+	local CapeColor
+	local selectedPreset = 'Halloween'
+	local capeImages = {}
 	local part, motor
 	
+	local function refreshCape()
+		if Cape and Cape.Enabled then
+			Cape:Toggle()
+			Cape:Toggle()
+		end
+	end
+
 	local function createMotor(char)
 		if motor then
 			motor:Destroy()
@@ -8417,42 +8427,51 @@ run(function()
 				part.Massless = true
 				part.Transparency = 0
 				part.Material = Enum.Material.SmoothPlastic
-				part.Color = Color3.new(1, 1, 1)
+				part.Color = Color3.fromHSV(CapeColor.Hue, CapeColor.Sat, CapeColor.Value)
 				part.CastShadow = false
 				part.Parent = gameCamera
-				local texture = Texture.Value:gsub('^%s*(.-)%s*$', '%1')
+				local presets = {
+					Halloween = 'rbxassetid://5782179756',
+					Cross = 'rbxassetid://14736249347'
+				}
+				local texture = (presets[selectedPreset] or (selectedPreset == 'Custom' and Texture.Value) or ''):gsub('^%s*(.-)%s*$', '%1')
 				local isVideo = texture:lower():find('%.webm$') ~= nil
-				local textureAsset = texture:match('^%d+$') and 'rbxassetid://'..texture
+				local textureAsset = texture == '' and ''
+					or texture:match('^%d+$') and 'rbxassetid://'..texture
 					or texture:find('rbxasset', 1, true) and texture
-					or texture ~= '' and getcustomasset(texture)
-					or 'rbxassetid://5782179756'
+					or getcustomasset(texture)
 				local capesurfaces = {}
+				table.clear(capeImages)
 
-				for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
-					local capesurface = Instance.new('SurfaceGui')
-					capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-					capesurface.PixelsPerStud = 100
-					capesurface.Adornee = part
-					capesurface.Face = face
-					capesurface.LightInfluence = 0
-					capesurface.Parent = part
-					table.insert(capesurfaces, capesurface)
+				if textureAsset ~= '' then
+					for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
+						local capesurface = Instance.new('SurfaceGui')
+						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+						capesurface.PixelsPerStud = 100
+						capesurface.Adornee = part
+						capesurface.Face = face
+						capesurface.LightInfluence = 0
+						capesurface.Parent = part
+						table.insert(capesurfaces, capesurface)
 
-					if isVideo then
-						local decal = Instance.new('VideoFrame')
-						decal.Video = textureAsset
-						decal.Size = UDim2.fromScale(1, 1)
-						decal.BackgroundTransparency = 1
-						decal.Looped = true
-						decal.Parent = capesurface
-						decal:Play()
-					else
-						local image = Instance.new('ImageLabel')
-						image.Image = textureAsset
-						image.Size = UDim2.fromScale(1, 1)
-						image.BackgroundTransparency = 1
-						image.ScaleType = Enum.ScaleType.Stretch
-						image.Parent = capesurface
+						if isVideo then
+							local video = Instance.new('VideoFrame')
+							video.Video = textureAsset
+							video.Size = UDim2.fromScale(1, 1)
+							video.BackgroundTransparency = 1
+							video.Looped = true
+							video.Parent = capesurface
+							video:Play()
+						else
+							local image = Instance.new('ImageLabel')
+							image.Image = textureAsset
+							image.ImageColor3 = Color3.fromHSV(CapeColor.Hue, CapeColor.Sat, CapeColor.Value)
+							image.Size = UDim2.fromScale(1, 1)
+							image.BackgroundTransparency = 1
+							image.ScaleType = Enum.ScaleType.Stretch
+							image.Parent = capesurface
+							table.insert(capeImages, image)
+						end
 					end
 				end
 	
@@ -8477,17 +8496,43 @@ run(function()
 			else
 				part = nil
 				motor = nil
+				table.clear(capeImages)
 			end
 		end,
 		Tooltip = 'Add\'s a cape to your character'
+	})
+	Cape:CreateDropdown({
+		Name = 'Cape Preset',
+		List = {'Halloween', 'Cross', 'Solid Color', 'Custom'},
+		Function = function(value)
+			selectedPreset = value
+			if Texture and Texture.Object then
+				Texture.Object.Visible = value == 'Custom'
+			end
+			refreshCape()
+		end
 	})
 	Texture = Cape:CreateTextBox({
 		Name = 'Texture',
 		Default = 'rbxassetid://5782179756',
 		Function = function(enter)
-			if enter and Cape.Enabled then
-				Cape:Toggle()
-				Cape:Toggle()
+			if enter and selectedPreset == 'Custom' then
+				refreshCape()
+			end
+		end
+	})
+	Texture.Object.Visible = selectedPreset == 'Custom'
+	CapeColor = Cape:CreateColorSlider({
+		Name = 'Cape Color',
+		Function = function(hue, sat, value)
+			local tint = Color3.fromHSV(hue, sat, value)
+			if part then
+				part.Color = tint
+			end
+			for _, image in capeImages do
+				if image.Parent then
+					image.ImageColor3 = tint
+				end
 			end
 		end
 	})
