@@ -8448,7 +8448,7 @@ run(function()
 					decal:Play()
 				else
 					local decal = Instance.new('ImageLabel')
-					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://'
+					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://5782179723'
 					decal.Size = UDim2.fromScale(1, 1)
 					decal.BackgroundTransparency = 1
 					decal.Parent = capesurface
