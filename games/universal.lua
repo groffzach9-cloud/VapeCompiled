@@ -7172,10 +7172,10 @@ run(function()
 
 			greySkyAtmosphere = Instance.new('Atmosphere')
 			greySkyAtmosphere.Name = 'VapeGreySkyAtmosphere'
-			greySkyAtmosphere.Color = Color3.fromRGB(170, 170, 170)
-			greySkyAtmosphere.Decay = Color3.fromRGB(120, 120, 120)
-			greySkyAtmosphere.Density = 0.8
-			greySkyAtmosphere.Haze = 10
+			greySkyAtmosphere.Color = Color3.fromRGB(190, 190, 190)
+			greySkyAtmosphere.Decay = Color3.fromRGB(150, 150, 150)
+			greySkyAtmosphere.Density = 0.15
+			greySkyAtmosphere.Haze = 0
 			greySkyAtmosphere.Glare = 0
 			greySkyAtmosphere.Parent = lightingService
 		elseif not enabled and greySkyAtmosphere then
