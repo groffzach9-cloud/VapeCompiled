@@ -8477,7 +8477,8 @@ run(function()
 		Tooltip = 'Add\'s a cape to your character'
 	})
 	Texture = Cape:CreateTextBox({
-		Name = 'Texture'
+		Name = 'Texture',
+		Default = 'rbxassetid://5782179756'
 	})
 end)
 
