@@ -7179,7 +7179,7 @@ run(function()
 		applied = {}
 	end
 	
-	FFlagEditor = vape.Categories.Utility:CreateModule({
+	FFlagEditor = vape.Categories.Render:CreateModule({
 		Name = 'FFlag Editor',
 		Function = function(callback)
 			if callback then
