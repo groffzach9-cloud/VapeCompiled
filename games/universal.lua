@@ -7165,6 +7165,10 @@ run(function()
 	local oceanTerrain
 	local originalOceanSettings
 	local originalOceanLighting
+	local oceanVoxelRegion
+	local oceanVoxelChanges
+	local oceanVoxelResolution = 4
+	local oceanRecenterPosition
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
@@ -7310,10 +7314,37 @@ run(function()
 		end
 	end
 
+	local function restoreOceanVoxels()
+		if not (oceanTerrain and oceanVoxelRegion and oceanVoxelChanges) then return end
+
+		local success, materials, occupancies = pcall(oceanTerrain.ReadVoxels, oceanTerrain, oceanVoxelRegion, oceanVoxelResolution)
+		if not success then
+			vape:CreateNotification('Rainstorm', 'Could not read client ocean voxels for cleanup: '..tostring(materials), 8, 'warning')
+			return
+		end
+
+		for _, change in oceanVoxelChanges do
+			if materials[change.X][change.Y][change.Z] == Enum.Material.Water and occupancies[change.X][change.Y][change.Z] >= 0.99 then
+				materials[change.X][change.Y][change.Z] = change.Material
+				occupancies[change.X][change.Y][change.Z] = change.Occupancy
+			end
+		end
+
+		local writeSuccess, writeError = pcall(oceanTerrain.WriteVoxels, oceanTerrain, oceanVoxelRegion, oceanVoxelResolution, materials, occupancies)
+		if not writeSuccess then
+			vape:CreateNotification('Rainstorm', 'Could not restore client ocean voxels: '..tostring(writeError), 8, 'warning')
+			return
+		end
+
+		oceanVoxelRegion = nil
+		oceanVoxelChanges = nil
+		oceanRecenterPosition = nil
+	end
+
 	local function setOcean(enabled)
 		if enabled and not oceanFolder then
 			oceanFolder = Instance.new('Folder')
-			oceanFolder.Name = 'VapeOcean'
+			oceanFolder.Name = 'VapeOceanEffects'
 			oceanFolder.Parent = workspace
 
 			originalOceanLighting = {
@@ -7341,8 +7372,8 @@ run(function()
 				oceanTerrain.WaterColor = Color3.fromRGB(18, 83, 119)
 				oceanTerrain.WaterReflectance = 0.32
 				oceanTerrain.WaterTransparency = 0.18
-				oceanTerrain.WaterWaveSize = 0.22
-				oceanTerrain.WaterWaveSpeed = 18
+				oceanTerrain.WaterWaveSize = 0.45
+				oceanTerrain.WaterWaveSpeed = 20
 			end
 
 			oceanColorCorrection = Instance.new('ColorCorrectionEffect')
@@ -7379,75 +7410,81 @@ run(function()
 				vape:CreateNotification('Rainstorm', 'Ocean audio failed to play: '..tostring(err), 5, 'warning')
 			end
 
-			local tiles = {}
-			local tileSize = 48
-			for x = -2, 2 do
-				for z = -2, 2 do
-					local tile = Instance.new('Part')
-					tile.Name = 'OceanWave'
-					tile.Anchored = true
-					tile.CanCollide = false
-					tile.CanQuery = false
-					tile.CanTouch = false
-					tile.Material = Enum.Material.Water
-					tile.Color = Color3.fromRGB(20, 91, 130)
-					tile.Transparency = 0.18
-					tile.Reflectance = 0.12
-					tile.Size = Vector3.new(tileSize + 0.15, 0.35, tileSize + 0.15)
-					tile.Parent = oceanFolder
-					table.insert(tiles, {Object = tile, OffsetX = x, OffsetZ = z})
+			oceanTerrain = workspace:FindFirstChildWhichIsA('Terrain')
+			local function createOceanVoxels(position)
+				if not oceanTerrain then return false end
+				local centerX = math.floor(position.X / oceanVoxelResolution) * oceanVoxelResolution
+				local centerZ = math.floor(position.Z / oceanVoxelResolution) * oceanVoxelResolution
+				local surfaceY = math.ceil((position.Y - 1.5) / oceanVoxelResolution) * oceanVoxelResolution
+				local region = Region3.new(
+					Vector3.new(centerX - 128, surfaceY - 64, centerZ - 128),
+					Vector3.new(centerX + 128, surfaceY, centerZ + 128)
+				):ExpandToGrid(oceanVoxelResolution)
+
+				local readSuccess, materials, occupancies = pcall(oceanTerrain.ReadVoxels, oceanTerrain, region, oceanVoxelResolution)
+				if not readSuccess then
+					vape:CreateNotification('Rainstorm', 'Could not read client terrain for ocean: '..tostring(materials), 8, 'warning')
+					return false
 				end
+
+				local changes = {}
+				local min = region.Min
+				for x, column in materials do
+					for y, row in column do
+						local voxelY = min.Y + (y - 1) * oceanVoxelResolution
+						if voxelY + oceanVoxelResolution > surfaceY then continue end
+						for z in row do
+							if occupancies[x][y][z] > 0 then continue end
+							local voxelX = min.X + (x - 0.5) * oceanVoxelResolution
+							local voxelZ = min.Z + (z - 0.5) * oceanVoxelResolution
+							if (voxelX - centerX)^2 + (voxelZ - centerZ)^2 > 128^2 then continue end
+
+							table.insert(changes, {
+								X = x,
+								Y = y,
+								Z = z,
+								Material = materials[x][y][z],
+								Occupancy = occupancies[x][y][z]
+							})
+							materials[x][y][z] = Enum.Material.Water
+							occupancies[x][y][z] = 1
+						end
+					end
+				end
+
+				local writeSuccess, writeError = pcall(oceanTerrain.WriteVoxels, oceanTerrain, region, oceanVoxelResolution, materials, occupancies)
+				if not writeSuccess then
+					vape:CreateNotification('Rainstorm', 'Could not create client terrain ocean: '..tostring(writeError), 8, 'warning')
+					return false
+				end
+
+				oceanVoxelRegion = region
+				oceanVoxelChanges = changes
+				oceanRecenterPosition = position
+				return true
 			end
 
-			local foam = {}
-			for index = 1, 16 do
-				local crest = Instance.new('Part')
-				crest.Name = 'OceanFoam'
-				crest.Anchored = true
-				crest.CanCollide = false
-				crest.CanQuery = false
-				crest.CanTouch = false
-				crest.Material = Enum.Material.SmoothPlastic
-				crest.Color = Color3.fromRGB(205, 231, 236)
-				crest.Transparency = 0.48
-				crest.Size = Vector3.new(math.random(5, 13), 0.045, math.random(1, 2))
-				crest.Parent = oceanFolder
-				table.insert(foam, {
-					Object = crest,
-					OffsetX = math.random(-105, 105),
-					OffsetZ = math.random(-105, 105),
-					Phase = index * 0.8
-				})
+			local character = lplr.Character
+			local root = character and character:FindFirstChild('HumanoidRootPart')
+			if root then
+				createOceanVoxels(root.Position)
 			end
 
-			local elapsed = 0
-			local rayParams = RaycastParams.new()
-			rayParams.FilterType = Enum.RaycastFilterType.Exclude
-			oceanConnection = runService.RenderStepped:Connect(function(dt)
+			local elapsed = 1
+			oceanConnection = runService.Heartbeat:Connect(function(dt)
 				elapsed += dt
-				local character = lplr.Character
-				local root = character and character:FindFirstChild('HumanoidRootPart')
-				if not root then return end
+				if elapsed < 1 then return end
+				elapsed = 0
 
-				local centerX = math.floor(root.Position.X / tileSize + 0.5) * tileSize
-				local centerZ = math.floor(root.Position.Z / tileSize + 0.5) * tileSize
-				rayParams.FilterDescendantsInstances = {character, oceanFolder}
-				local ground = workspace:Raycast(root.Position + Vector3.new(0, 32, 0), Vector3.new(0, -256, 0), rayParams)
-				local baseY = ground and ground.Position.Y + 0.25 or root.Position.Y - 5
+				local currentCharacter = lplr.Character
+				local currentRoot = currentCharacter and currentCharacter:FindFirstChild('HumanoidRootPart')
+				if not currentRoot then return end
 
-				for _, tile in tiles do
-					local x = centerX + tile.OffsetX * tileSize
-					local z = centerZ + tile.OffsetZ * tileSize
-					local wave = math.sin(x * 0.025 + elapsed * 1.4) * 0.28 + math.cos(z * 0.03 - elapsed) * 0.2
-					tile.Object.CFrame = CFrame.new(x, baseY + wave, z)
+				if oceanRecenterPosition and (Vector3.new(currentRoot.Position.X, 0, currentRoot.Position.Z) - Vector3.new(oceanRecenterPosition.X, 0, oceanRecenterPosition.Z)).Magnitude > 112 then
+					restoreOceanVoxels()
 				end
-
-				for _, crest in foam do
-					local x = centerX + crest.OffsetX
-					local z = centerZ + crest.OffsetZ
-					local wave = math.sin(x * 0.025 + elapsed * 1.4) * 0.28 + math.cos(z * 0.03 - elapsed) * 0.2
-					crest.Object.CFrame = CFrame.new(x, baseY + wave + 0.21, z) * CFrame.Angles(0, math.sin(elapsed + crest.Phase) * 0.12, 0)
-					crest.Object.Transparency = 0.42 + math.sin(elapsed * 1.5 + crest.Phase) * 0.12
+				if not oceanVoxelRegion then
+					createOceanVoxels(currentRoot.Position)
 				end
 			end)
 		elseif not enabled and oceanFolder then
@@ -7455,6 +7492,7 @@ run(function()
 				oceanConnection:Disconnect()
 				oceanConnection = nil
 			end
+			restoreOceanVoxels()
 			oceanFolder:Destroy()
 			oceanFolder = nil
 			if oceanSound then
