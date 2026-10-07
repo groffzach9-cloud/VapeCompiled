@@ -25472,11 +25472,78 @@ run(function()
 	local HotbarColor: table  = {}
 	local HotbarHighlightColor: table  = {}
 	local HotbarSlotNumberColor: table  = {}
+	local HotbarHealthbarColorToggle: table = {}
+	local HotbarHealthbarColor: table = {}
+	local HotbarHealthbarGradientToggle: table = {}
+	local HotbarHealthbarGradientColor: table = {}
+	local HotbarHealthbarGradientColor2: table = {}
+	local HotbarHealthbarOutlineToggle: table = {}
+	local HotbarHealthbarOutlineColor: table = {}
 	local hotbarcoloricons: table  = {}
 	local hotbarsloticons: table  = {}
 	local hotbarobjects: table  = {}
 	local hotbarslotgradients: table  = {}
 	local inventoryiconobj: any = nil
+	local healthbarFill: GuiObject? = nil
+	local healthbarOriginalColor: Color3? = nil
+	local healthbarGradient: UIGradient? = nil
+	local healthbarOutline: UIStroke? = nil
+
+	local function clearHealthbarEffects()
+		if healthbarFill and healthbarFill.Parent and healthbarOriginalColor then
+			healthbarFill.BackgroundColor3 = healthbarOriginalColor
+		end
+		if healthbarGradient then healthbarGradient:Destroy(); healthbarGradient = nil; end
+		if healthbarOutline then healthbarOutline:Destroy(); healthbarOutline = nil; end
+		healthbarFill = nil
+		healthbarOriginalColor = nil
+	end
+
+	local function updateHealthbarEffects()
+		local hotbar = lplr.PlayerGui:FindFirstChild('hotbar')
+		local wrapper = hotbar and hotbar:FindFirstChild('HealthbarProgressWrapper', true)
+		local fill = wrapper and wrapper:FindFirstChild('1')
+		if not (fill and fill:IsA('GuiObject')) then
+			clearHealthbarEffects()
+			return
+		end
+
+		if healthbarFill ~= fill then
+			clearHealthbarEffects()
+			healthbarFill = fill
+			healthbarOriginalColor = fill.BackgroundColor3
+		end
+		local originalColor = healthbarOriginalColor or fill.BackgroundColor3
+
+		if HotbarHealthbarGradientToggle.Enabled then
+			fill.BackgroundColor3 = Color3.new(1, 1, 1)
+			if not healthbarGradient then
+				healthbarGradient = Instance.new('UIGradient')
+				healthbarGradient.Parent = fill
+			end
+			healthbarGradient.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromHSV(HotbarHealthbarGradientColor.Hue, HotbarHealthbarGradientColor.Sat, HotbarHealthbarGradientColor.Value)),
+				ColorSequenceKeypoint.new(1, Color3.fromHSV(HotbarHealthbarGradientColor2.Hue, HotbarHealthbarGradientColor2.Sat, HotbarHealthbarGradientColor2.Value))
+			})
+		else
+			if healthbarGradient then healthbarGradient:Destroy(); healthbarGradient = nil; end
+			fill.BackgroundColor3 = HotbarHealthbarColorToggle.Enabled
+				and Color3.fromHSV(HotbarHealthbarColor.Hue, HotbarHealthbarColor.Sat, HotbarHealthbarColor.Value)
+				or originalColor
+		end
+
+		if HotbarHealthbarOutlineToggle.Enabled then
+			if not healthbarOutline then
+				healthbarOutline = Instance.new('UIStroke')
+				healthbarOutline.Thickness = 1.3
+				healthbarOutline.Parent = fill
+			end
+			healthbarOutline.Color = Color3.fromHSV(HotbarHealthbarOutlineColor.Hue, HotbarHealthbarOutlineColor.Sat, HotbarHealthbarOutlineColor.Value)
+		elseif healthbarOutline then
+			healthbarOutline:Destroy()
+			healthbarOutline = nil
+		end
+	end
 
 	local function hotbarFunction(): (any, any)
 		local icons: any = ({pcall(function() return lplr.PlayerGui.hotbar["1"].ItemsHotbar end)})[2];
@@ -25539,8 +25606,10 @@ run(function()
 				end);
 				table.insert(HotbarVisuals.Connections, runService.RenderStepped:Connect(function()
 					for _, v in hotbarcoloricons do pcall(function() v.Transparency = 0.1 * HotbarInvisibility["Value"]; end); end
+					updateHealthbarEffects()
 				end));
 			else
+				clearHealthbarEffects()
 				for _: any, v: any in hotbarsloticons do pcall(function() v.Visible = true; end); end
 				for _: any, v: any in hotbarcoloricons do pcall(function() v.BackgroundColor3 = Color3.fromRGB(29, 36, 46); end); end
 				for _: any, v: any in hotbarobjects do pcall(function() v:Destroy(); end); end
@@ -25644,6 +25713,48 @@ run(function()
 			end;
 		end;
 	})
+	HotbarHealthbarColorToggle = HotbarVisuals:CreateToggle({
+		["Name"] = 'Healthbar Color',
+		["Function"] = function(callback: boolean): void
+			if HotbarHealthbarColor.Object then HotbarHealthbarColor.Object.Visible = callback; end
+			updateHealthbarEffects()
+		end
+	})
+	HotbarHealthbarColor = HotbarVisuals:CreateColorSlider({
+		["Name"] = 'Healthbar Color',
+		["Function"] = updateHealthbarEffects
+	})
+	HotbarHealthbarGradientToggle = HotbarVisuals:CreateToggle({
+		["Name"] = 'Healthbar Gradient',
+		["Function"] = function(callback: boolean): void
+			if HotbarHealthbarGradientColor.Object then HotbarHealthbarGradientColor.Object.Visible = callback; end
+			if HotbarHealthbarGradientColor2.Object then HotbarHealthbarGradientColor2.Object.Visible = callback; end
+			updateHealthbarEffects()
+		end
+	})
+	HotbarHealthbarGradientColor = HotbarVisuals:CreateColorSlider({
+		["Name"] = 'Healthbar Gradient Color',
+		["Function"] = updateHealthbarEffects
+	})
+	HotbarHealthbarGradientColor2 = HotbarVisuals:CreateColorSlider({
+		["Name"] = 'Healthbar Gradient Color 2',
+		["Function"] = updateHealthbarEffects
+	})
+	HotbarHealthbarOutlineToggle = HotbarVisuals:CreateToggle({
+		["Name"] = 'Healthbar Outline',
+		["Function"] = function(callback: boolean): void
+			if HotbarHealthbarOutlineColor.Object then HotbarHealthbarOutlineColor.Object.Visible = callback; end
+			updateHealthbarEffects()
+		end
+	})
+	HotbarHealthbarOutlineColor = HotbarVisuals:CreateColorSlider({
+		["Name"] = 'Healthbar Outline Color',
+		["Function"] = updateHealthbarEffects
+	})
+	HotbarHealthbarColor.Object.Visible = false
+	HotbarHealthbarGradientColor.Object.Visible = false
+	HotbarHealthbarGradientColor2.Object.Visible = false
+	HotbarHealthbarOutlineColor.Object.Visible = false
 	HotbarColor.Object.Visible = false;
 	HotbarRoundRadius.Object.Visible = false;
 	HotbarHighlightColor.Object.Visible = false;
