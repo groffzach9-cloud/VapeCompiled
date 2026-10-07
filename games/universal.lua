@@ -8295,7 +8295,10 @@ run(function()
 			end
 			if not skyWasEnabled then
 				Toggles.Sky.Toggle:Toggle()
-			elseif Atmosphere.Enabled then
+			end
+			if not Atmosphere.Enabled then
+				Atmosphere:Toggle()
+			elseif skyWasEnabled then
 				Atmosphere:Toggle()
 				Atmosphere:Toggle()
 			end
@@ -8417,7 +8420,7 @@ run(function()
 	local CapeColor
 	local selectedPreset = 'Halloween'
 	local capeTint = Color3.new(1, 1, 1)
-	local capeImages = {}
+	local capeDecals = {}
 	local part, motor
 	
 	local function refreshCape()
@@ -8453,7 +8456,7 @@ run(function()
 				part.Massless = true
 				part.Transparency = 0
 				part.Material = Enum.Material.SmoothPlastic
-				part.Color = capeTint
+				part.Color = selectedPreset == 'Solid Color' and capeTint or Color3.new(1, 1, 1)
 				part.CastShadow = false
 				part.Parent = gameCamera
 				local presets = {
@@ -8474,21 +8477,21 @@ run(function()
 					textureAsset = getcustomasset(texture)
 				end
 				local capesurfaces = {}
-				table.clear(capeImages)
+				table.clear(capeDecals)
 
 				if textureAsset ~= '' then
 					for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
-						local capesurface = Instance.new('SurfaceGui')
-						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
-						capesurface.CanvasSize = Vector2.new(200, 400)
-						capesurface.Adornee = part
-						capesurface.Face = face
-						capesurface.LightInfluence = 0
-						capesurface.AlwaysOnTop = true
-						capesurface.Parent = part
-						table.insert(capesurfaces, capesurface)
-
 						if isVideo then
+							local capesurface = Instance.new('SurfaceGui')
+							capesurface.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+							capesurface.CanvasSize = Vector2.new(200, 400)
+							capesurface.Adornee = part
+							capesurface.Face = face
+							capesurface.LightInfluence = 0
+							capesurface.AlwaysOnTop = true
+							capesurface.Parent = part
+							table.insert(capesurfaces, capesurface)
+
 							local video = Instance.new('VideoFrame')
 							video.Video = textureAsset
 							video.Size = UDim2.fromScale(1, 1)
@@ -8497,14 +8500,12 @@ run(function()
 							video.Parent = capesurface
 							video:Play()
 						else
-							local image = Instance.new('ImageLabel')
-							image.Image = textureAsset
-							image.ImageColor3 = capeTint
-							image.Size = UDim2.fromScale(1, 1)
-							image.BackgroundTransparency = 1
-							image.ScaleType = Enum.ScaleType.Stretch
-							image.Parent = capesurface
-							table.insert(capeImages, image)
+							local decal = Instance.new('Decal')
+							decal.Texture = textureAsset
+							decal.Color3 = capeTint
+							decal.Face = face
+							decal.Parent = part
+							table.insert(capeDecals, decal)
 						end
 					end
 				end
@@ -8525,12 +8526,15 @@ run(function()
 					for _, surface in capesurfaces do
 						surface.Enabled = visible
 					end
+					for _, decal in capeDecals do
+						decal.Transparency = visible and 0 or 1
+					end
 					part.Transparency = visible and 0 or 1
 				end))
 			else
 				part = nil
 				motor = nil
-				table.clear(capeImages)
+				table.clear(capeDecals)
 			end
 		end,
 		Tooltip = 'Add\'s a cape to your character'
@@ -8561,11 +8565,11 @@ run(function()
 		Function = function(hue, sat, value)
 			capeTint = Color3.fromHSV(hue, sat, value)
 			if part then
-				part.Color = capeTint
+				part.Color = selectedPreset == 'Solid Color' and capeTint or Color3.new(1, 1, 1)
 			end
-			for _, image in capeImages do
-				if image.Parent then
-					image.ImageColor3 = capeTint
+			for _, decal in capeDecals do
+				if decal.Parent then
+					decal.Color3 = capeTint
 				end
 			end
 		end
