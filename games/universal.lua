@@ -8248,6 +8248,7 @@ run(function()
 		Toggles[i] = {Objects = {}}
 		Toggles[i].Toggle = Atmosphere:CreateToggle({
 			Name = i,
+			Default = i == 'Sky',
 			Function = function(callback)
 				if Atmosphere.Enabled then
 					Atmosphere:Toggle()
@@ -8271,7 +8272,7 @@ run(function()
 						end
 					end,
 					Darker = true,
-					Default = v2 == 'Number' and '0' or nil,
+					Default = v2 == 'Number' and '0' or (i == 'Sky' and i2:sub(1, 6) == 'Skybox' and 'rbxassetid://5782179723' or nil),
 					Visible = false
 				})
 			elseif v2 == 'Color' then
