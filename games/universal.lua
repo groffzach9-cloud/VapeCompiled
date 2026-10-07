@@ -7150,6 +7150,7 @@ run(function()
 	local FFlagEditor
 	local JSONBox
 	local applied = {}
+	local captured = {}
 	local defaultFlags = '{"FFlagDebugSkyGray":"True","DFIntTaskSchedulerTargetFps":"9999","DFFlagTextureQualityOverrideEnabled":"True","DFIntTextureQualityOverride":"0","FIntRenderShadowIntensity":"0","FFlagDisablePostFx":"True"}'
 
 	local function decodeFlags()
@@ -7166,25 +7167,60 @@ run(function()
 		end
 		
 		local count = 0
+		local rejected = {}
 		for key, value in pairs(data) do
 			if type(key) ~= 'string' then
 				vape:CreateNotification('FFlag Editor', 'JSON keys must be strings.', 5, 'alert')
 				return
 			end
-			if not applied[key] then
-				applied[key] = getfflag and getfflag(key) or nil
+			local wasCaptured = captured[key]
+			if not captured[key] then
+				if not getfflag then
+					table.insert(rejected, key)
+					continue
+				end
+
+				local success, original = pcall(getfflag, key)
+				if not success or original == nil then
+					table.insert(rejected, key)
+					continue
+				end
+
+				captured[key] = true
+				applied[key] = original
 			end
-			setfflag(key, tostring(value))
-			count += 1
+
+			local success = pcall(setfflag, key, tostring(value))
+			if success then
+				count += 1
+			else
+				if not wasCaptured then
+					applied[key] = nil
+					captured[key] = nil
+				end
+				table.insert(rejected, key)
+			end
+		end
+
+		if #rejected > 0 then
+			vape:CreateNotification('FFlag Editor', 'Unsupported FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
 		return count
 	end
 	
 	local function restoreFlags()
+		local rejected = {}
 		for key, value in pairs(applied) do
-			setfflag(key, tostring(value))
+			local success = pcall(setfflag, key, tostring(value))
+			if not success then
+				table.insert(rejected, key)
+			end
+		end
+		if #rejected > 0 then
+			vape:CreateNotification('FFlag Editor', 'Could not restore FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
 		applied = {}
+		captured = {}
 	end
 	
 	FFlagEditor = vape.Categories.Render:CreateModule({
