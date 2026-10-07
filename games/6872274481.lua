@@ -14707,6 +14707,148 @@ run(function()
 end)
 
 run(function()
+	local SwordTexturePack
+	local TextureBox
+	local ColorPicker
+	local textureAsset = ''
+	local tintColor = Color3.new(1, 1, 1)
+	local originalTextures = setmetatable({}, {__mode = 'k'})
+	local originalColors = setmetatable({}, {__mode = 'k'})
+	local refreshElapsed = 0
+
+	local function restoreTextureOverrides()
+		for object, record in originalTextures do
+			pcall(function()
+				object[record.Property] = record.Value
+			end)
+			originalTextures[object] = nil
+		end
+	end
+
+	local function restoreTextures()
+		restoreTextureOverrides()
+		for object, originalColor in originalColors do
+			pcall(function()
+				object.Color = originalColor
+			end)
+			originalColors[object] = nil
+		end
+	end
+
+	local function isSwordModel(object, root)
+		local current = object
+		while current and current ~= root do
+			local meta = bedwars.ItemMeta[current.Name]
+			if (meta and meta.sword) or current.Name:lower():find('sword', 1, true) then
+				return true
+			end
+			current = current.Parent
+		end
+		return false
+	end
+
+	local function setTexture(object, property)
+		if textureAsset == '' then return end
+		if not originalTextures[object] then
+			originalTextures[object] = {Property = property, Value = object[property]}
+		end
+		object[property] = textureAsset
+	end
+
+	local function applyToRoot(root)
+		if not root then return end
+		for _, object in root:GetDescendants() do
+			if not isSwordModel(object, root) then continue end
+
+			if object:IsA('MeshPart') then
+				setTexture(object, 'TextureID')
+			elseif object:IsA('SpecialMesh') then
+				setTexture(object, 'TextureId')
+			elseif object:IsA('Decal') or object:IsA('Texture') then
+				setTexture(object, 'Texture')
+			end
+
+			local basePart = object:IsA('BasePart') and object or object:FindFirstAncestorWhichIsA('BasePart')
+			if basePart then
+				if not originalColors[basePart] then
+					originalColors[basePart] = basePart.Color
+				end
+				basePart.Color = tintColor
+			end
+		end
+	end
+
+	local function applyTextures()
+		if not SwordTexturePack or not SwordTexturePack.Enabled then return end
+		if TextureBox and type(TextureBox.Value) == 'string' then
+			local value = TextureBox.Value:gsub('^%s*(.-)%s*$', '%1')
+			textureAsset = value:match('^%d+$') and 'rbxassetid://'..value
+				or value:find('rbxasset', 1, true) and value
+				or ''
+		end
+		if ColorPicker then
+			tintColor = Color3.fromHSV(ColorPicker.Hue, ColorPicker.Sat, ColorPicker.Value)
+		end
+		if textureAsset == '' then
+			restoreTextureOverrides()
+		end
+		applyToRoot(lplr.Character)
+		applyToRoot(gameCamera)
+	end
+
+	SwordTexturePack = vape.Categories.Render:CreateModule({
+		Name = 'Sword Texture Pack',
+		Function = function(callback)
+			if TextureBox and TextureBox.Object then
+				TextureBox.Object.Visible = callback
+			end
+			if ColorPicker and ColorPicker.Object then
+				ColorPicker.Object.Visible = callback
+			end
+			if callback then
+				applyTextures()
+				SwordTexturePack:Clean(runService.RenderStepped:Connect(function(deltaTime)
+					refreshElapsed += deltaTime
+					if refreshElapsed >= 0.35 then
+						refreshElapsed = 0
+						applyTextures()
+					end
+				end))
+				SwordTexturePack:Clean(lplr.CharacterAdded:Connect(function()
+					task.defer(applyTextures)
+				end))
+			else
+				restoreTextures()
+				refreshElapsed = 0
+			end
+		end,
+		Tooltip = 'Applies a custom texture and tint to your sword meshes locally.'
+	})
+
+	TextureBox = SwordTexturePack:CreateTextBox({
+		Name = 'Texture ID',
+		Placeholder = 'Roblox texture asset ID',
+		Function = function(enter)
+			if not enter then return end
+			applyTextures()
+		end
+	})
+	ColorPicker = SwordTexturePack:CreateColorSlider({
+		Name = 'Sword Tint',
+		Function = function(hue, saturation, value)
+			tintColor = Color3.fromHSV(hue, saturation, value)
+			applyTextures()
+		end
+	})
+	ColorPicker.Object.Visible = SwordTexturePack.Enabled
+	TextureBox.Object.Visible = SwordTexturePack.Enabled
+
+	SwordTexturePack:Clean(function()
+		restoreTextures()
+	end)
+end)
+
+run(function()
 	local InventoryESP
 	local TeamCheck
 	local Kits
