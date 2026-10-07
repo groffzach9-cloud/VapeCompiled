@@ -8287,12 +8287,15 @@ run(function()
 				or value == 'Matching Halloween' and 'rbxassetid://7766242854'
 			if not asset then return end
 
+			local skyWasEnabled = Toggles.Sky.Toggle.Enabled
 			for _, face in {'SkyboxUp', 'SkyboxDn', 'SkyboxLf', 'SkyboxRt', 'SkyboxFt', 'SkyboxBk'} do
 				local textbox = Toggles.Sky.Objects[face]
 				textbox.Value = asset
 				textbox.Object.Text = asset
 			end
-			if Atmosphere.Enabled then
+			if not skyWasEnabled then
+				Toggles.Sky.Toggle:Toggle()
+			elseif Atmosphere.Enabled then
 				Atmosphere:Toggle()
 				Atmosphere:Toggle()
 			end
@@ -8476,11 +8479,12 @@ run(function()
 				if textureAsset ~= '' then
 					for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
 						local capesurface = Instance.new('SurfaceGui')
-						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-						capesurface.PixelsPerStud = 100
+						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+						capesurface.CanvasSize = Vector2.new(200, 400)
 						capesurface.Adornee = part
 						capesurface.Face = face
 						capesurface.LightInfluence = 0
+						capesurface.AlwaysOnTop = true
 						capesurface.Parent = part
 						table.insert(capesurfaces, capesurface)
 
