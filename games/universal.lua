@@ -8276,6 +8276,28 @@ run(function()
 			end
 		end
 	end
+
+	Atmosphere:CreateDropdown({
+		Name = 'Skybox Preset',
+		List = {'Custom', 'Such Halloween', 'Anime Halloween', 'Matching Halloween'},
+		Default = 'Custom',
+		Function = function(value)
+			local asset = value == 'Such Halloween' and 'rbxassetid://183692400'
+				or value == 'Anime Halloween' and 'rbxassetid://5187036274'
+				or value == 'Matching Halloween' and 'rbxassetid://7766242854'
+			if not asset then return end
+
+			for _, face in {'SkyboxUp', 'SkyboxDn', 'SkyboxLf', 'SkyboxRt', 'SkyboxFt', 'SkyboxBk'} do
+				local textbox = Toggles.Sky.Objects[face]
+				textbox.Value = asset
+				textbox.Object.Text = asset
+			end
+			if Atmosphere.Enabled then
+				Atmosphere:Toggle()
+				Atmosphere:Toggle()
+			end
+		end
+	})
 end)
 
 run(function()
@@ -8433,7 +8455,10 @@ run(function()
 				part.Parent = gameCamera
 				local presets = {
 					Halloween = 'rbxassetid://5782179756',
-					Cross = 'rbxassetid://14736249347'
+					Cross = 'rbxassetid://14736249347',
+					['Such Halloween'] = 'rbxassetid://183692400',
+					['Anime Halloween'] = 'rbxassetid://5187036274',
+					['Matching Halloween'] = 'rbxassetid://7766242854'
 				}
 				local texture = (presets[selectedPreset] or (selectedPreset == 'Custom' and Texture and Texture.Value) or ''):gsub('^%s*(.-)%s*$', '%1')
 				local isVideo = texture:lower():find('%.webm$') ~= nil
@@ -8508,7 +8533,7 @@ run(function()
 	})
 	Cape:CreateDropdown({
 		Name = 'Cape Preset',
-		List = {'Halloween', 'Cross', 'Solid Color', 'Custom'},
+		List = {'Halloween', 'Cross', 'Such Halloween', 'Anime Halloween', 'Matching Halloween', 'Solid Color', 'Custom'},
 		Function = function(value)
 			selectedPreset = value
 			if Texture and Texture.Object then
