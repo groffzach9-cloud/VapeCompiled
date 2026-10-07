@@ -8188,33 +8188,42 @@ run(function()
 			end
 		end
 	end
+
+	local function rebuildObjects()
+		if not Atmosphere or not Atmosphere.Enabled then return end
+
+		for _, object in lightingService:GetChildren() do
+			removeObject(object)
+		end
+		for _, object in newobjects do
+			object:Destroy()
+		end
+		table.clear(newobjects)
+
+		for className, toggle in Toggles do
+			if toggle.Toggle.Enabled then
+				local object = Instance.new(className)
+				for property, option in toggle.Objects do
+					if option.Type == 'ColorSlider' then
+						object[property] = Color3.fromHSV(option.Hue, option.Sat, option.Value)
+					else
+						object[property] = apidump[className][property] ~= 'Number' and option.Value or tonumber(option.Value) or 0
+					end
+				end
+				object.Parent = lightingService
+				table.insert(newobjects, object)
+			end
+		end
+	end
 	
 	Atmosphere = vape.Categories.Render:CreateModule({
 		Name = 'Atmosphere',
 		Function = function(callback)
 			if callback then
-				for _, v in lightingService:GetChildren() do
-					removeObject(v)
-				end
-	
 				Atmosphere:Clean(lightingService.ChildAdded:Connect(function(v)
 					task.defer(removeObject, v)
 				end))
-	
-				for i, v in Toggles do
-					if v.Toggle.Enabled then
-						local obj = Instance.new(i)
-						for i2, v2 in v.Objects do
-							if v2.Type == 'ColorSlider' then
-								obj[i2] = Color3.fromHSV(v2.Hue, v2.Sat, v2.Value)
-							else
-								obj[i2] = apidump[i][i2] ~= 'Number' and v2.Value or tonumber(v2.Value) or 0
-							end
-						end
-						obj.Parent = lightingService
-						table.insert(newobjects, obj)
-					end
-				end
+				rebuildObjects()
 			else
 				for _, v in newobjects do
 					v:Destroy()
@@ -8236,14 +8245,10 @@ run(function()
 			Name = i,
 			Default = i == 'Sky',
 			Function = function(callback)
-				if Atmosphere.Enabled then
-					Atmosphere:Toggle()
-					Atmosphere:Toggle()
-				end
-	
 				for _, toggle in Toggles[i].Objects do
 					toggle.Object.Visible = callback
 				end
+				rebuildObjects()
 			end
 		})
 	
@@ -8252,10 +8257,7 @@ run(function()
 				Toggles[i].Objects[i2] = Atmosphere:CreateTextBox({
 					Name = i2,
 					Function = function(enter)
-						if Atmosphere.Enabled and enter then
-							Atmosphere:Toggle()
-							Atmosphere:Toggle()
-						end
+						if enter then rebuildObjects() end
 					end,
 					Darker = true,
 					Default = v2 == 'Number' and '0' or (i == 'Sky' and i2:sub(1, 6) == 'Skybox' and 'rbxassetid://5782179723' or nil),
@@ -8264,12 +8266,7 @@ run(function()
 			elseif v2 == 'Color' then
 				Toggles[i].Objects[i2] = Atmosphere:CreateColorSlider({
 					Name = i2,
-					Function = function()
-						if Atmosphere.Enabled then
-							Atmosphere:Toggle()
-							Atmosphere:Toggle()
-						end
-					end,
+					Function = rebuildObjects,
 					Darker = true,
 					Visible = false
 				})
@@ -8291,7 +8288,8 @@ run(function()
 			for _, face in {'SkyboxUp', 'SkyboxDn', 'SkyboxLf', 'SkyboxRt', 'SkyboxFt', 'SkyboxBk'} do
 				local textbox = Toggles.Sky.Objects[face]
 				textbox.Value = asset
-				textbox.Object.Text = asset
+				local input = textbox.Object:FindFirstChildWhichIsA('TextBox', true)
+				if input then input.Text = asset end
 			end
 			if not skyWasEnabled then
 				Toggles.Sky.Toggle:Toggle()
@@ -8299,8 +8297,7 @@ run(function()
 			if not Atmosphere.Enabled then
 				Atmosphere:Toggle()
 			elseif skyWasEnabled then
-				Atmosphere:Toggle()
-				Atmosphere:Toggle()
+				rebuildObjects()
 			end
 		end
 	})
@@ -8420,6 +8417,7 @@ run(function()
 	local CapeColor
 	local selectedPreset = 'Halloween'
 	local capeTint = Color3.new(1, 1, 1)
+	local capeImages = {}
 	local capeDecals = {}
 	local part, motor
 	
@@ -8477,21 +8475,22 @@ run(function()
 					textureAsset = getcustomasset(texture)
 				end
 				local capesurfaces = {}
+				table.clear(capeImages)
 				table.clear(capeDecals)
 
 				if textureAsset ~= '' then
 					for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
-						if isVideo then
-							local capesurface = Instance.new('SurfaceGui')
-							capesurface.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
-							capesurface.CanvasSize = Vector2.new(200, 400)
-							capesurface.Adornee = part
-							capesurface.Face = face
-							capesurface.LightInfluence = 0
-							capesurface.AlwaysOnTop = true
-							capesurface.Parent = part
-							table.insert(capesurfaces, capesurface)
+						local capesurface = Instance.new('SurfaceGui')
+						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+						capesurface.CanvasSize = Vector2.new(200, 400)
+						capesurface.Adornee = part
+						capesurface.Face = face
+						capesurface.LightInfluence = 0
+						capesurface.AlwaysOnTop = true
+						capesurface.Parent = part
+						table.insert(capesurfaces, capesurface)
 
+						if isVideo then
 							local video = Instance.new('VideoFrame')
 							video.Video = textureAsset
 							video.Size = UDim2.fromScale(1, 1)
@@ -8500,6 +8499,15 @@ run(function()
 							video.Parent = capesurface
 							video:Play()
 						else
+							local image = Instance.new('ImageLabel')
+							image.Image = textureAsset
+							image.ImageColor3 = capeTint
+							image.Size = UDim2.fromScale(1, 1)
+							image.BackgroundTransparency = 1
+							image.ScaleType = Enum.ScaleType.Stretch
+							image.Parent = capesurface
+							table.insert(capeImages, image)
+
 							local decal = Instance.new('Decal')
 							decal.Texture = textureAsset
 							decal.Color3 = capeTint
@@ -8534,6 +8542,7 @@ run(function()
 			else
 				part = nil
 				motor = nil
+				table.clear(capeImages)
 				table.clear(capeDecals)
 			end
 		end,
@@ -8570,6 +8579,11 @@ run(function()
 			for _, decal in capeDecals do
 				if decal.Parent then
 					decal.Color3 = capeTint
+				end
+			end
+			for _, image in capeImages do
+				if image.Parent then
+					image.ImageColor3 = capeTint
 				end
 			end
 		end
