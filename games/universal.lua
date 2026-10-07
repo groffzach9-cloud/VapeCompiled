@@ -8427,18 +8427,18 @@ run(function()
 					or texture ~= '' and getcustomasset(texture)
 					or 'rbxassetid://5782179756'
 				local capesurfaces = {}
-				local capedecals = {}
 
 				for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
-					if isVideo then
-						local capesurface = Instance.new('SurfaceGui')
-						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-						capesurface.Adornee = part
-						capesurface.Face = face
-						capesurface.LightInfluence = 0
-						capesurface.Parent = part
-						table.insert(capesurfaces, capesurface)
+					local capesurface = Instance.new('SurfaceGui')
+					capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+					capesurface.PixelsPerStud = 100
+					capesurface.Adornee = part
+					capesurface.Face = face
+					capesurface.LightInfluence = 0
+					capesurface.Parent = part
+					table.insert(capesurfaces, capesurface)
 
+					if isVideo then
 						local decal = Instance.new('VideoFrame')
 						decal.Video = textureAsset
 						decal.Size = UDim2.fromScale(1, 1)
@@ -8447,11 +8447,12 @@ run(function()
 						decal.Parent = capesurface
 						decal:Play()
 					else
-						local decal = Instance.new('Decal')
-						decal.Texture = textureAsset
-						decal.Face = face
-						decal.Parent = part
-						table.insert(capedecals, decal)
+						local image = Instance.new('ImageLabel')
+						image.Image = textureAsset
+						image.Size = UDim2.fromScale(1, 1)
+						image.BackgroundTransparency = 1
+						image.ScaleType = Enum.ScaleType.Stretch
+						image.Parent = capesurface
 					end
 				end
 	
@@ -8471,9 +8472,6 @@ run(function()
 					for _, surface in capesurfaces do
 						surface.Enabled = visible
 					end
-					for _, decal in capedecals do
-						decal.Transparency = visible and 0 or 1
-					end
 					part.Transparency = visible and 0 or 1
 				end))
 			else
@@ -8485,7 +8483,13 @@ run(function()
 	})
 	Texture = Cape:CreateTextBox({
 		Name = 'Texture',
-		Default = 'rbxassetid://5782179756'
+		Default = 'rbxassetid://5782179756',
+		Function = function(enter)
+			if enter and Cape.Enabled then
+				Cape:Toggle()
+				Cape:Toggle()
+			end
+		end
 	})
 end)
 
