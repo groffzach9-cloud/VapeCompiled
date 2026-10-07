@@ -8476,7 +8476,7 @@ run(function()
 	})
 	Texture = Cape:CreateTextBox({
 		Name = 'Texture',
-		Default = 'rbxassetid://'
+		Default = 'rbxassetid://116191035304389'
 	})
 end)
 
