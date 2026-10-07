@@ -7177,8 +7177,8 @@ run(function()
 			greySkyAtmosphere.Name = 'VapeGreySkyAtmosphere'
 			greySkyAtmosphere.Color = Color3.fromRGB(170, 170, 170)
 			greySkyAtmosphere.Decay = Color3.fromRGB(120, 120, 120)
-			greySkyAtmosphere.Density = 0.8
-			greySkyAtmosphere.Haze = 10
+			greySkyAtmosphere.Density = 0.6
+			greySkyAtmosphere.Haze = 7
 			greySkyAtmosphere.Glare = 0
 			greySkyAtmosphere.Parent = lightingService
 		elseif not enabled and greySkyAtmosphere then
@@ -7215,15 +7215,15 @@ run(function()
 			local camera = workspace.CurrentCamera
 			local viewport = camera and camera.ViewportSize or Vector2.new(1920, 1080)
 			local streaks = {}
-			for _ = 1, 85 do
+			for _ = 1, 140 do
 				local streak = Instance.new('Frame')
 				streak.AnchorPoint = Vector2.new(0.5, 0)
 				streak.BackgroundColor3 = Color3.fromRGB(205, 224, 238)
-				streak.BackgroundTransparency = math.random(35, 60) / 100
+				streak.BackgroundTransparency = math.random(20, 45) / 100
 				streak.BorderSizePixel = 0
 				streak.Position = UDim2.fromOffset(math.random(0, viewport.X), math.random(-viewport.Y, viewport.Y))
 				streak.Rotation = 12
-				streak.Size = UDim2.fromOffset(math.random(1, 2), math.random(14, 28))
+				streak.Size = UDim2.fromOffset(math.random(1, 2), math.random(18, 32))
 				streak.Parent = rainstormGui
 
 				local gradient = Instance.new('UIGradient')
@@ -7240,8 +7240,8 @@ run(function()
 					X = streak.Position.X.Offset,
 					Y = streak.Position.Y.Offset,
 					Length = streak.Size.Y.Offset,
-					Speed = math.random(650, 1100),
-					Drift = math.random(30, 110)
+					Speed = math.random(850, 1350),
+					Drift = math.random(45, 140)
 				})
 			end
 
