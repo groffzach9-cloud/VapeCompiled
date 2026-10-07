@@ -7158,6 +7158,11 @@ run(function()
 	local rainstormConnection
 	local oceanFolder
 	local oceanConnection
+	local oceanSound
+	local oceanColorCorrection
+	local oceanBloom
+	local oceanTerrain
+	local originalOceanSettings
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
@@ -7309,6 +7314,50 @@ run(function()
 			oceanFolder.Name = 'VapeOcean'
 			oceanFolder.Parent = workspace
 
+			oceanTerrain = workspace:FindFirstChildWhichIsA('Terrain')
+			if oceanTerrain then
+				originalOceanSettings = {
+					WaterColor = oceanTerrain.WaterColor,
+					WaterReflectance = oceanTerrain.WaterReflectance,
+					WaterTransparency = oceanTerrain.WaterTransparency,
+					WaterWaveSize = oceanTerrain.WaterWaveSize,
+					WaterWaveSpeed = oceanTerrain.WaterWaveSpeed
+				}
+				oceanTerrain.WaterColor = Color3.fromRGB(18, 83, 119)
+				oceanTerrain.WaterReflectance = 0.32
+				oceanTerrain.WaterTransparency = 0.18
+				oceanTerrain.WaterWaveSize = 0.22
+				oceanTerrain.WaterWaveSpeed = 18
+			end
+
+			oceanColorCorrection = Instance.new('ColorCorrectionEffect')
+			oceanColorCorrection.Name = 'VapeOceanColor'
+			oceanColorCorrection.TintColor = Color3.fromRGB(205, 230, 238)
+			oceanColorCorrection.Saturation = 0.08
+			oceanColorCorrection.Contrast = 0.06
+			oceanColorCorrection.Brightness = -0.015
+			oceanColorCorrection.Parent = lightingService
+
+			oceanBloom = Instance.new('BloomEffect')
+			oceanBloom.Name = 'VapeOceanBloom'
+			oceanBloom.Intensity = 0.22
+			oceanBloom.Size = 18
+			oceanBloom.Threshold = 1.8
+			oceanBloom.Parent = lightingService
+
+			oceanSound = Instance.new('Sound')
+			oceanSound.Name = 'VapeOceanWaves'
+			oceanSound.SoundId = 'rbxassetid://93281700241946'
+			oceanSound.Volume = 0.28
+			oceanSound.Looped = true
+			oceanSound.Parent = game:GetService('SoundService')
+			local success, err = pcall(function()
+				oceanSound:Play()
+			end)
+			if not success then
+				vape:CreateNotification('Rainstorm', 'Ocean audio failed to play: '..tostring(err), 5, 'warning')
+			end
+
 			local tiles = {}
 			local tileSize = 48
 			for x = -2, 2 do
@@ -7387,6 +7436,26 @@ run(function()
 			end
 			oceanFolder:Destroy()
 			oceanFolder = nil
+			if oceanSound then
+				oceanSound:Stop()
+				oceanSound:Destroy()
+				oceanSound = nil
+			end
+			if oceanColorCorrection then
+				oceanColorCorrection:Destroy()
+				oceanColorCorrection = nil
+			end
+			if oceanBloom then
+				oceanBloom:Destroy()
+				oceanBloom = nil
+			end
+			if oceanTerrain and originalOceanSettings then
+				for property, value in originalOceanSettings do
+					oceanTerrain[property] = value
+				end
+				oceanTerrain = nil
+				originalOceanSettings = nil
+			end
 		end
 	end
 	
