@@ -7151,13 +7151,44 @@ run(function()
 	local JSONBox
 	local applied = {}
 	local captured = {}
-	local defaultFlags = '{"FFlagDebugSkyGray":"True","DFIntTaskSchedulerTargetFps":"9999","DFFlagTextureQualityOverrideEnabled":"True","DFIntTextureQualityOverride":"0","FIntRenderShadowIntensity":"0","FFlagDisablePostFx":"True"}'
+	local greySkyAtmosphere
+	local originalAtmospheres = {}
+	local defaultFlags = '{"GreySky":true}'
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
 			JSONBox:SetValue(defaultFlags)
 		end
 		return httpService:JSONDecode(JSONBox.Value)
+	end
+
+	local function setGreySky(enabled)
+		if enabled and not greySkyAtmosphere then
+			for _, object in lightingService:GetChildren() do
+				if object:IsA('Atmosphere') then
+					table.insert(originalAtmospheres, object)
+					object.Parent = game
+				end
+			end
+
+			greySkyAtmosphere = Instance.new('Atmosphere')
+			greySkyAtmosphere.Name = 'VapeGreySkyAtmosphere'
+			greySkyAtmosphere.Color = Color3.fromRGB(170, 170, 170)
+			greySkyAtmosphere.Decay = Color3.fromRGB(120, 120, 120)
+			greySkyAtmosphere.Density = 0.8
+			greySkyAtmosphere.Haze = 10
+			greySkyAtmosphere.Glare = 0
+			greySkyAtmosphere.Parent = lightingService
+		elseif not enabled and greySkyAtmosphere then
+			greySkyAtmosphere:Destroy()
+			greySkyAtmosphere = nil
+			for _, object in originalAtmospheres do
+				if object.Parent then
+					object.Parent = lightingService
+				end
+			end
+			table.clear(originalAtmospheres)
+		end
 	end
 	
 	local function applyFlags(data)
@@ -7173,6 +7204,12 @@ run(function()
 				vape:CreateNotification('FFlag Editor', 'JSON keys must be strings.', 5, 'alert')
 				return
 			end
+			if key:lower():gsub('[%s_%-]', '') == 'greysky' then
+				setGreySky(value == true or tostring(value):lower() == 'true' or value == 1)
+				count += 1
+				continue
+			end
+
 			local wasCaptured = captured[key]
 			if not captured[key] then
 				if not getfflag then
@@ -7219,6 +7256,7 @@ run(function()
 		if #rejected > 0 then
 			vape:CreateNotification('FFlag Editor', 'Could not restore FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
+		setGreySky(false)
 		applied = {}
 		captured = {}
 	end
@@ -7243,7 +7281,7 @@ run(function()
 				restoreFlags()
 			end
 		end,
-		Tooltip = 'Apply and restore JSON-defined Roblox FFlags'
+		Tooltip = 'Apply and restore JSON-defined Roblox FFlags, including the built-in GreySky effect'
 	})
 	JSONBox = FFlagEditor:CreateTextBox({
 		Name = 'FFlags',
