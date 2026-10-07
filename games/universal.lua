@@ -7156,19 +7156,9 @@ run(function()
 	local rainstormGui
 	local rainstormSound
 	local rainstormConnection
-	local oceanFolder
-	local oceanConnection
-	local oceanSound
-	local oceanColorCorrection
-	local oceanBloom
-	local oceanSunRays
-	local oceanTerrain
-	local originalOceanSettings
-	local originalOceanLighting
-	local oceanVoxelRegion
-	local oceanVoxelChanges
-	local oceanVoxelResolution = 4
-	local oceanRecenterPosition
+	local rainstormColorCorrection
+	local rainstormBloom
+	local originalRainLighting
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
@@ -7217,6 +7207,30 @@ run(function()
 		setGreySky(enabled)
 
 		if enabled then
+			originalRainLighting = {
+				Ambient = lightingService.Ambient,
+				OutdoorAmbient = lightingService.OutdoorAmbient,
+				Brightness = lightingService.Brightness
+			}
+			lightingService.Ambient = Color3.fromRGB(42, 54, 68)
+			lightingService.OutdoorAmbient = Color3.fromRGB(88, 105, 120)
+			lightingService.Brightness = math.max(0.7, lightingService.Brightness * 0.75)
+
+			rainstormColorCorrection = Instance.new('ColorCorrectionEffect')
+			rainstormColorCorrection.Name = 'VapeRainstormColor'
+			rainstormColorCorrection.TintColor = Color3.fromRGB(190, 210, 228)
+			rainstormColorCorrection.Saturation = -0.12
+			rainstormColorCorrection.Contrast = 0.12
+			rainstormColorCorrection.Brightness = -0.06
+			rainstormColorCorrection.Parent = lightingService
+
+			rainstormBloom = Instance.new('BloomEffect')
+			rainstormBloom.Name = 'VapeRainstormBloom'
+			rainstormBloom.Intensity = 0.12
+			rainstormBloom.Size = 18
+			rainstormBloom.Threshold = 1.7
+			rainstormBloom.Parent = lightingService
+
 			local playerGui = lplr:WaitForChild('PlayerGui')
 			rainstormGui = Instance.new('ScreenGui')
 			rainstormGui.Name = 'VapeRainstorm'
@@ -7228,15 +7242,15 @@ run(function()
 			local camera = workspace.CurrentCamera
 			local viewport = camera and camera.ViewportSize or Vector2.new(1920, 1080)
 			local streaks = {}
-			for _ = 1, 140 do
+			for _ = 1, 260 do
 				local streak = Instance.new('Frame')
 				streak.AnchorPoint = Vector2.new(0.5, 0)
-				streak.BackgroundColor3 = Color3.fromRGB(205, 224, 238)
-				streak.BackgroundTransparency = math.random(20, 45) / 100
+				streak.BackgroundColor3 = Color3.fromRGB(215, 232, 245)
+				streak.BackgroundTransparency = math.random(12, 35) / 100
 				streak.BorderSizePixel = 0
 				streak.Position = UDim2.fromOffset(math.random(0, viewport.X), math.random(-viewport.Y, viewport.Y))
 				streak.Rotation = 12
-				streak.Size = UDim2.fromOffset(math.random(1, 2), math.random(18, 32))
+				streak.Size = UDim2.fromOffset(math.random(1, 2), math.random(22, 38))
 				streak.Parent = rainstormGui
 
 				local gradient = Instance.new('UIGradient')
@@ -7253,8 +7267,8 @@ run(function()
 					X = streak.Position.X.Offset,
 					Y = streak.Position.Y.Offset,
 					Length = streak.Size.Y.Offset,
-					Speed = math.random(850, 1350),
-					Drift = math.random(45, 140)
+					Speed = math.random(1000, 1600),
+					Drift = math.random(60, 180)
 				})
 			end
 
@@ -7287,6 +7301,15 @@ run(function()
 					task.wait(math.random(18, 32))
 					if rainstormActive and rainstormSound == sound then
 						sound.PlaybackSpeed = math.random(85, 110) / 100
+						local flashEffect = rainstormColorCorrection
+						if flashEffect then
+							flashEffect.Brightness = 0.22
+							task.delay(0.16, function()
+								if rainstormActive and rainstormColorCorrection == flashEffect then
+									flashEffect.Brightness = -0.06
+								end
+							end)
+						end
 						local success, err = pcall(function()
 							sound:Play()
 						end)
@@ -7311,223 +7334,23 @@ run(function()
 				rainstormSound:Destroy()
 				rainstormSound = nil
 			end
-		end
-	end
-
-	local function restoreOceanVoxels()
-		if not (oceanTerrain and oceanVoxelRegion and oceanVoxelChanges) then return end
-
-		local success, materials, occupancies = pcall(oceanTerrain.ReadVoxels, oceanTerrain, oceanVoxelRegion, oceanVoxelResolution)
-		if not success then
-			vape:CreateNotification('Rainstorm', 'Could not read client ocean voxels for cleanup: '..tostring(materials), 8, 'warning')
-			return
-		end
-
-		for _, change in oceanVoxelChanges do
-			if materials[change.X][change.Y][change.Z] == Enum.Material.Water and occupancies[change.X][change.Y][change.Z] >= 0.99 then
-				materials[change.X][change.Y][change.Z] = change.Material
-				occupancies[change.X][change.Y][change.Z] = change.Occupancy
+			if rainstormColorCorrection then
+				rainstormColorCorrection:Destroy()
+				rainstormColorCorrection = nil
 			end
-		end
-
-		local writeSuccess, writeError = pcall(oceanTerrain.WriteVoxels, oceanTerrain, oceanVoxelRegion, oceanVoxelResolution, materials, occupancies)
-		if not writeSuccess then
-			vape:CreateNotification('Rainstorm', 'Could not restore client ocean voxels: '..tostring(writeError), 8, 'warning')
-			return
-		end
-
-		oceanVoxelRegion = nil
-		oceanVoxelChanges = nil
-		oceanRecenterPosition = nil
-	end
-
-	local function setOcean(enabled)
-		if enabled and not oceanFolder then
-			oceanFolder = Instance.new('Folder')
-			oceanFolder.Name = 'VapeOceanEffects'
-			oceanFolder.Parent = workspace
-
-			originalOceanLighting = {
-				Ambient = lightingService.Ambient,
-				OutdoorAmbient = lightingService.OutdoorAmbient,
-				EnvironmentDiffuseScale = lightingService.EnvironmentDiffuseScale,
-				EnvironmentSpecularScale = lightingService.EnvironmentSpecularScale,
-				GlobalShadows = lightingService.GlobalShadows
-			}
-			lightingService.Ambient = Color3.fromRGB(62, 82, 94)
-			lightingService.OutdoorAmbient = Color3.fromRGB(105, 132, 145)
-			lightingService.EnvironmentDiffuseScale = 1
-			lightingService.EnvironmentSpecularScale = 1
-			lightingService.GlobalShadows = true
-
-			oceanTerrain = workspace:FindFirstChildWhichIsA('Terrain')
-			if oceanTerrain then
-				originalOceanSettings = {
-					WaterColor = oceanTerrain.WaterColor,
-					WaterReflectance = oceanTerrain.WaterReflectance,
-					WaterTransparency = oceanTerrain.WaterTransparency,
-					WaterWaveSize = oceanTerrain.WaterWaveSize,
-					WaterWaveSpeed = oceanTerrain.WaterWaveSpeed
-				}
-				oceanTerrain.WaterColor = Color3.fromRGB(18, 83, 119)
-				oceanTerrain.WaterReflectance = 0.32
-				oceanTerrain.WaterTransparency = 0.18
-				oceanTerrain.WaterWaveSize = 0.45
-				oceanTerrain.WaterWaveSpeed = 20
+			if rainstormBloom then
+				rainstormBloom:Destroy()
+				rainstormBloom = nil
 			end
-
-			oceanColorCorrection = Instance.new('ColorCorrectionEffect')
-			oceanColorCorrection.Name = 'VapeOceanColor'
-			oceanColorCorrection.TintColor = Color3.fromRGB(195, 224, 235)
-			oceanColorCorrection.Saturation = 0.12
-			oceanColorCorrection.Contrast = 0.08
-			oceanColorCorrection.Brightness = -0.02
-			oceanColorCorrection.Parent = lightingService
-
-			oceanBloom = Instance.new('BloomEffect')
-			oceanBloom.Name = 'VapeOceanBloom'
-			oceanBloom.Intensity = 0.28
-			oceanBloom.Size = 24
-			oceanBloom.Threshold = 1.65
-			oceanBloom.Parent = lightingService
-
-			oceanSunRays = Instance.new('SunRaysEffect')
-			oceanSunRays.Name = 'VapeOceanSunRays'
-			oceanSunRays.Intensity = 0.06
-			oceanSunRays.Spread = 0.65
-			oceanSunRays.Parent = lightingService
-
-			oceanSound = Instance.new('Sound')
-			oceanSound.Name = 'VapeOceanWaves'
-			oceanSound.SoundId = 'rbxassetid://93281700241946'
-			oceanSound.Volume = 0.28
-			oceanSound.Looped = true
-			oceanSound.Parent = game:GetService('SoundService')
-			local success, err = pcall(function()
-				oceanSound:Play()
-			end)
-			if not success then
-				vape:CreateNotification('Rainstorm', 'Ocean audio failed to play: '..tostring(err), 5, 'warning')
-			end
-
-			oceanTerrain = workspace:FindFirstChildWhichIsA('Terrain')
-			local function createOceanVoxels(position)
-				if not oceanTerrain then return false end
-				local centerX = math.floor(position.X / oceanVoxelResolution) * oceanVoxelResolution
-				local centerZ = math.floor(position.Z / oceanVoxelResolution) * oceanVoxelResolution
-				local surfaceY = math.ceil((position.Y - 1.5) / oceanVoxelResolution) * oceanVoxelResolution
-				local region = Region3.new(
-					Vector3.new(centerX - 128, surfaceY - 64, centerZ - 128),
-					Vector3.new(centerX + 128, surfaceY, centerZ + 128)
-				):ExpandToGrid(oceanVoxelResolution)
-
-				local readSuccess, materials, occupancies = pcall(oceanTerrain.ReadVoxels, oceanTerrain, region, oceanVoxelResolution)
-				if not readSuccess then
-					vape:CreateNotification('Rainstorm', 'Could not read client terrain for ocean: '..tostring(materials), 8, 'warning')
-					return false
-				end
-
-				local changes = {}
-				local min = region.Min
-				for x, column in materials do
-					for y, row in column do
-						local voxelY = min.Y + (y - 1) * oceanVoxelResolution
-						if voxelY + oceanVoxelResolution > surfaceY then continue end
-						for z in row do
-							if occupancies[x][y][z] > 0 then continue end
-							local voxelX = min.X + (x - 0.5) * oceanVoxelResolution
-							local voxelZ = min.Z + (z - 0.5) * oceanVoxelResolution
-							if (voxelX - centerX)^2 + (voxelZ - centerZ)^2 > 128^2 then continue end
-
-							table.insert(changes, {
-								X = x,
-								Y = y,
-								Z = z,
-								Material = materials[x][y][z],
-								Occupancy = occupancies[x][y][z]
-							})
-							materials[x][y][z] = Enum.Material.Water
-							occupancies[x][y][z] = 1
-						end
-					end
-				end
-
-				local writeSuccess, writeError = pcall(oceanTerrain.WriteVoxels, oceanTerrain, region, oceanVoxelResolution, materials, occupancies)
-				if not writeSuccess then
-					vape:CreateNotification('Rainstorm', 'Could not create client terrain ocean: '..tostring(writeError), 8, 'warning')
-					return false
-				end
-
-				oceanVoxelRegion = region
-				oceanVoxelChanges = changes
-				oceanRecenterPosition = position
-				return true
-			end
-
-			local character = lplr.Character
-			local root = character and character:FindFirstChild('HumanoidRootPart')
-			if root then
-				createOceanVoxels(root.Position)
-			end
-
-			local elapsed = 1
-			oceanConnection = runService.Heartbeat:Connect(function(dt)
-				elapsed += dt
-				if elapsed < 1 then return end
-				elapsed = 0
-
-				local currentCharacter = lplr.Character
-				local currentRoot = currentCharacter and currentCharacter:FindFirstChild('HumanoidRootPart')
-				if not currentRoot then return end
-
-				if oceanRecenterPosition and (Vector3.new(currentRoot.Position.X, 0, currentRoot.Position.Z) - Vector3.new(oceanRecenterPosition.X, 0, oceanRecenterPosition.Z)).Magnitude > 112 then
-					restoreOceanVoxels()
-				end
-				if not oceanVoxelRegion then
-					createOceanVoxels(currentRoot.Position)
-				end
-			end)
-		elseif not enabled and oceanFolder then
-			if oceanConnection then
-				oceanConnection:Disconnect()
-				oceanConnection = nil
-			end
-			restoreOceanVoxels()
-			oceanFolder:Destroy()
-			oceanFolder = nil
-			if oceanSound then
-				oceanSound:Stop()
-				oceanSound:Destroy()
-				oceanSound = nil
-			end
-			if oceanColorCorrection then
-				oceanColorCorrection:Destroy()
-				oceanColorCorrection = nil
-			end
-			if oceanBloom then
-				oceanBloom:Destroy()
-				oceanBloom = nil
-			end
-			if oceanSunRays then
-				oceanSunRays:Destroy()
-				oceanSunRays = nil
-			end
-			if oceanTerrain and originalOceanSettings then
-				for property, value in originalOceanSettings do
-					oceanTerrain[property] = value
-				end
-				oceanTerrain = nil
-				originalOceanSettings = nil
-			end
-			if originalOceanLighting then
-				for property, value in originalOceanLighting do
+			if originalRainLighting then
+				for property, value in originalRainLighting do
 					lightingService[property] = value
 				end
-				originalOceanLighting = nil
+				originalRainLighting = nil
 			end
 		end
 	end
-	
+
 	local function applyFlags(data)
 		if type(data) ~= 'table' then
 			vape:CreateNotification('Rainstorm', 'JSON must contain an object of flag names and values.', 5, 'alert')
@@ -7547,10 +7370,6 @@ run(function()
 				continue
 			elseif key:lower():gsub('[%s_%-]', '') == 'rainstorm' then
 				setRainstorm(value == true or tostring(value):lower() == 'true' or value == 1)
-				count += 1
-				continue
-			elseif key:lower():gsub('[%s_%-]', '') == 'ocean' then
-				setOcean(value == true or tostring(value):lower() == 'true' or value == 1)
 				count += 1
 				continue
 			end
@@ -7602,7 +7421,6 @@ run(function()
 			vape:CreateNotification('Rainstorm', 'Could not restore FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
 		setRainstorm(false)
-		setOcean(false)
 		setGreySky(false)
 		applied = {}
 		captured = {}
@@ -7628,11 +7446,11 @@ run(function()
 				restoreFlags()
 			end
 		end,
-		Tooltip = 'Apply Roblox FFlags or use the built-in Rainstorm, GreySky and Ocean effects'
+		Tooltip = 'Apply Roblox FFlags or use the built-in Rainstorm and GreySky effects'
 	})
 	JSONBox = RainstormModule:CreateTextBox({
 		Name = 'FFlags',
-		Placeholder = '{"Rainstorm":true,"Ocean":true}',
+		Placeholder = '{"Rainstorm":true}',
 		Function = function(enter)
 			if enter and RainstormModule.Enabled then
 				local success, data = pcall(function()
