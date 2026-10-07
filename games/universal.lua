@@ -8431,28 +8431,41 @@ run(function()
 				part.Massless = true
 				part.Transparency = 0
 				part.Material = Enum.Material.SmoothPlastic
-				part.Color = Color3.new()
+				part.Color = Color3.new(1, 1, 1)
 				part.CastShadow = false
 				part.Parent = gameCamera
-				local capesurface = Instance.new('SurfaceGui')
-				capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-				capesurface.Adornee = part
-				capesurface.Parent = part
+				local texture = Texture.Value:gsub('^%s*(.-)%s*$', '%1')
+				local isVideo = texture:lower():find('%.webm$') ~= nil
+				local textureAsset = texture:match('^%d+$') and 'rbxassetid://'..texture
+					or texture:find('rbxasset', 1, true) and texture
+					or texture ~= '' and getcustomasset(texture)
+					or 'rbxassetid://5782179756'
+				local capesurfaces = {}
 
-				if Texture.Value:find('.webm') then
-					local decal = Instance.new('VideoFrame')
-					decal.Video = getcustomasset(Texture.Value)
-					decal.Size = UDim2.fromScale(1, 1)
-					decal.BackgroundTransparency = 1
-					decal.Looped = true
-					decal.Parent = capesurface
-					decal:Play()
-				else
-					local decal = Instance.new('ImageLabel')
-					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or getcustomasset(Texture.Value)) or 'rbxassetid://5782179723'
-					decal.Size = UDim2.fromScale(1, 1)
-					decal.BackgroundTransparency = 1
-					decal.Parent = capesurface
+				for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
+					local capesurface = Instance.new('SurfaceGui')
+					capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+					capesurface.Adornee = part
+					capesurface.Face = face
+					capesurface.LightInfluence = 0
+					capesurface.Parent = part
+					table.insert(capesurfaces, capesurface)
+
+					if isVideo then
+						local decal = Instance.new('VideoFrame')
+						decal.Video = textureAsset
+						decal.Size = UDim2.fromScale(1, 1)
+						decal.BackgroundTransparency = 1
+						decal.Looped = true
+						decal.Parent = capesurface
+						decal:Play()
+					else
+						local decal = Instance.new('ImageLabel')
+						decal.Image = textureAsset
+						decal.Size = UDim2.fromScale(1, 1)
+						decal.BackgroundTransparency = 1
+						decal.Parent = capesurface
+					end
 				end
 	
 				Cape:Clean(part)
@@ -8467,8 +8480,11 @@ run(function()
 						motor.DesiredAngle = math.rad(6) + math.rad(velo) + (velo > 1 and math.abs(math.cos(tick() * 5)) / 3 or 0)
 					end
 	
-					capesurface.Enabled = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
-					part.Transparency = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6 and 0 or 1
+					local visible = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
+					for _, surface in capesurfaces do
+						surface.Enabled = visible
+					end
+					part.Transparency = visible and 0 or 1
 				end))
 			else
 				part = nil
