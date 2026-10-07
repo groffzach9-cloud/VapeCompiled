@@ -7147,27 +7147,82 @@ run(function()
 end)
 
 run(function()
-	local AntiRagdoll
+	local FFlagEditor
+	local JSONBox
+	local applied = {}
 	
-	AntiRagdoll = vape.Categories.Utility:CreateModule({
-		Name = 'AntiRagdoll',
-		Function = function(callback)
-			if entitylib.isAlive then
-				entitylib.character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, not callback)
+	local function applyFlags(data)
+		if type(data) ~= 'table' then
+			vape:CreateNotification('FFlag Editor', 'JSON must contain an object of flag names and values.', 5, 'alert')
+			return
+		end
+		
+		local count = 0
+		for key, value in pairs(data) do
+			if type(key) ~= 'string' then
+				vape:CreateNotification('FFlag Editor', 'JSON keys must be strings.', 5, 'alert')
+				return
 			end
+			if not applied[key] then
+				applied[key] = getfflag and getfflag(key) or nil
+			end
+			setfflag(key, tostring(value))
+			count += 1
+		end
+		return count
+	end
 	
+	local function restoreFlags()
+		for key, value in pairs(applied) do
+			setfflag(key, tostring(value))
+		end
+		applied = {}
+	end
+	
+	FFlagEditor = vape.Categories.Utility:CreateModule({
+		Name = 'FFlag Editor',
+		Function = function(callback)
 			if callback then
-				AntiRagdoll:Clean(entitylib.Events.LocalAdded:Connect(function(char)
-					char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-				end))
+				local success, data = pcall(function()
+					return httpService:JSONDecode(JSONBox.Value)
+				end)
+				if not success then
+					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..(data or 'unknown error'), 5, 'alert')
+					FFlagEditor:Toggle()
+					return
+				end
+				if applyFlags(data) then
+					return
+				end
+				FFlagEditor:Toggle()
+			else
+				restoreFlags()
 			end
 		end,
-		Tooltip = 'Prevents you from getting knocked down in a ragdoll state'
+		Tooltip = 'Apply and restore JSON-defined Roblox FFlags'
+	})
+	JSONBox = FFlagEditor:CreateTextBox({
+		Name = 'FFlags',
+		Placeholder = '{"FlagName":"value"}',
+		Function = function(enter)
+			if enter and FFlagEditor.Enabled then
+				local success, data = pcall(function()
+					return httpService:JSONDecode(JSONBox.Value)
+				end)
+				if not success then
+					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..(data or 'unknown error'), 5, 'alert')
+					return
+				end
+				applyFlags(data)
+			end
+		end
 	})
 end)
 
 run(function()
-	local AutoRejoin
+	local AntiRagdoll
+	
+	AntiRagdoll = vape.Categories.Utility:CreateModule({
 	local Sort
 	
 	AutoRejoin = vape.Categories.Utility:CreateModule({
