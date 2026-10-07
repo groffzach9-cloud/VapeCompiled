@@ -8391,6 +8391,7 @@ run(function()
 	local Texture
 	local CapeColor
 	local selectedPreset = 'Halloween'
+	local capeTint = Color3.new(1, 1, 1)
 	local capeImages = {}
 	local part, motor
 	
@@ -8427,19 +8428,23 @@ run(function()
 				part.Massless = true
 				part.Transparency = 0
 				part.Material = Enum.Material.SmoothPlastic
-				part.Color = Color3.fromHSV(CapeColor.Hue, CapeColor.Sat, CapeColor.Value)
+				part.Color = capeTint
 				part.CastShadow = false
 				part.Parent = gameCamera
 				local presets = {
 					Halloween = 'rbxassetid://5782179756',
 					Cross = 'rbxassetid://14736249347'
 				}
-				local texture = (presets[selectedPreset] or (selectedPreset == 'Custom' and Texture.Value) or ''):gsub('^%s*(.-)%s*$', '%1')
+				local texture = (presets[selectedPreset] or (selectedPreset == 'Custom' and Texture and Texture.Value) or ''):gsub('^%s*(.-)%s*$', '%1')
 				local isVideo = texture:lower():find('%.webm$') ~= nil
-				local textureAsset = texture == '' and ''
-					or texture:match('^%d+$') and 'rbxassetid://'..texture
-					or texture:find('rbxasset', 1, true) and texture
-					or getcustomasset(texture)
+				local textureAsset = ''
+				if texture:match('^%d+$') then
+					textureAsset = 'rbxassetid://'..texture
+				elseif texture:find('rbxasset', 1, true) then
+					textureAsset = texture
+				elseif texture ~= '' then
+					textureAsset = getcustomasset(texture)
+				end
 				local capesurfaces = {}
 				table.clear(capeImages)
 
@@ -8465,7 +8470,7 @@ run(function()
 						else
 							local image = Instance.new('ImageLabel')
 							image.Image = textureAsset
-							image.ImageColor3 = Color3.fromHSV(CapeColor.Hue, CapeColor.Sat, CapeColor.Value)
+							image.ImageColor3 = capeTint
 							image.Size = UDim2.fromScale(1, 1)
 							image.BackgroundTransparency = 1
 							image.ScaleType = Enum.ScaleType.Stretch
@@ -8525,13 +8530,13 @@ run(function()
 	CapeColor = Cape:CreateColorSlider({
 		Name = 'Cape Color',
 		Function = function(hue, sat, value)
-			local tint = Color3.fromHSV(hue, sat, value)
+			capeTint = Color3.fromHSV(hue, sat, value)
 			if part then
-				part.Color = tint
+				part.Color = capeTint
 			end
 			for _, image in capeImages do
 				if image.Parent then
-					image.ImageColor3 = tint
+					image.ImageColor3 = capeTint
 				end
 			end
 		end
