@@ -8426,16 +8426,19 @@ run(function()
 					or texture:find('rbxasset', 1, true) and texture
 					or texture ~= '' and getcustomasset(texture)
 					or 'rbxassetid://5782179756'
+				local capesurfaces = {}
+				local capedecals = {}
 
 				for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
-					local capesurface = Instance.new('SurfaceGui')
-					capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-					capesurface.Adornee = part
-					capesurface.Face = face
-					capesurface.LightInfluence = 0
-					capesurface.Parent = part
-
 					if isVideo then
+						local capesurface = Instance.new('SurfaceGui')
+						capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+						capesurface.Adornee = part
+						capesurface.Face = face
+						capesurface.LightInfluence = 0
+						capesurface.Parent = part
+						table.insert(capesurfaces, capesurface)
+
 						local decal = Instance.new('VideoFrame')
 						decal.Video = textureAsset
 						decal.Size = UDim2.fromScale(1, 1)
@@ -8444,11 +8447,11 @@ run(function()
 						decal.Parent = capesurface
 						decal:Play()
 					else
-						local decal = Instance.new('ImageLabel')
-						decal.Image = textureAsset
-						decal.Size = UDim2.fromScale(1, 1)
-						decal.BackgroundTransparency = 1
-						decal.Parent = capesurface
+						local decal = Instance.new('Decal')
+						decal.Texture = textureAsset
+						decal.Face = face
+						decal.Parent = part
+						table.insert(capedecals, decal)
 					end
 				end
 	
@@ -8464,8 +8467,14 @@ run(function()
 						motor.DesiredAngle = math.rad(6) + math.rad(velo) + (velo > 1 and math.abs(math.cos(tick() * 5)) / 3 or 0)
 					end
 	
-					capesurface.Enabled = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
-					part.Transparency = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6 and 0 or 1
+					local visible = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
+					for _, surface in capesurfaces do
+						surface.Enabled = visible
+					end
+					for _, decal in capedecals do
+						decal.Transparency = visible and 0 or 1
+					end
+					part.Transparency = visible and 0 or 1
 				end))
 			else
 				part = nil
@@ -8476,7 +8485,7 @@ run(function()
 	})
 	Texture = Cape:CreateTextBox({
 		Name = 'Texture',
-		Default = 'rbxassetid://116191035304389'
+		Default = 'rbxassetid://5782179756'
 	})
 end)
 
