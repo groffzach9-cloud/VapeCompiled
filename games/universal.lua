@@ -8273,7 +8273,7 @@ run(function()
 					end,
 					Darker = true,
 					Default = v2 == 'Number' and '0' or (i == 'Sky' and i2:sub(1, 6) == 'Skybox' and 'rbxassetid://5782179723' or nil),
-					Visible = false
+					Visible = i == 'Sky' and i2:sub(1, 6) == 'Skybox'
 				})
 			elseif v2 == 'Color' then
 				Toggles[i].Objects[i2] = Atmosphere:CreateColorSlider({
