@@ -7146,12 +7146,16 @@ run(function()
 end)
 
 run(function()
-	local FFlagEditor
+	local RainstormModule
 	local JSONBox
 	local applied = {}
 	local captured = {}
 	local greySkyAtmosphere
 	local originalAtmospheres = {}
+	local rainstormActive = false
+	local rainstormGui
+	local rainstormSound
+	local rainstormConnection
 
 	local function decodeFlags()
 		if JSONBox.Value:match('^%s*$') then
@@ -7188,10 +7192,118 @@ run(function()
 			table.clear(originalAtmospheres)
 		end
 	end
+
+	local function setRainstorm(enabled)
+		if rainstormActive == enabled then
+			if not enabled then
+				setGreySky(false)
+			end
+			return
+		end
+		rainstormActive = enabled
+		setGreySky(enabled)
+
+		if enabled then
+			local playerGui = lplr:WaitForChild('PlayerGui')
+			rainstormGui = Instance.new('ScreenGui')
+			rainstormGui.Name = 'VapeRainstorm'
+			rainstormGui.IgnoreGuiInset = true
+			rainstormGui.ResetOnSpawn = false
+			rainstormGui.DisplayOrder = 1
+			rainstormGui.Parent = playerGui
+
+			local camera = workspace.CurrentCamera
+			local viewport = camera and camera.ViewportSize or Vector2.new(1920, 1080)
+			local streaks = {}
+			for _ = 1, 85 do
+				local streak = Instance.new('Frame')
+				streak.AnchorPoint = Vector2.new(0.5, 0)
+				streak.BackgroundColor3 = Color3.fromRGB(205, 224, 238)
+				streak.BackgroundTransparency = math.random(35, 60) / 100
+				streak.BorderSizePixel = 0
+				streak.Position = UDim2.fromOffset(math.random(0, viewport.X), math.random(-viewport.Y, viewport.Y))
+				streak.Rotation = 12
+				streak.Size = UDim2.fromOffset(math.random(1, 2), math.random(14, 28))
+				streak.Parent = rainstormGui
+
+				local gradient = Instance.new('UIGradient')
+				gradient.Rotation = 90
+				gradient.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(0.5, 0.15),
+					NumberSequenceKeypoint.new(1, 1)
+				})
+				gradient.Parent = streak
+
+				table.insert(streaks, {
+					Object = streak,
+					X = streak.Position.X.Offset,
+					Y = streak.Position.Y.Offset,
+					Length = streak.Size.Y.Offset,
+					Speed = math.random(650, 1100),
+					Drift = math.random(30, 110)
+				})
+			end
+
+			rainstormConnection = runService.RenderStepped:Connect(function(dt)
+				local currentCamera = workspace.CurrentCamera
+				if not currentCamera then return end
+				viewport = currentCamera.ViewportSize
+				for _, streak in streaks do
+					streak.Y += streak.Speed * dt
+					streak.X += streak.Drift * dt
+					if streak.Y > viewport.Y then
+						streak.Y = -streak.Length
+						streak.X = math.random(0, viewport.X)
+					end
+					if streak.X > viewport.X then
+						streak.X = 0
+					end
+					streak.Object.Position = UDim2.fromOffset(streak.X, streak.Y)
+				end
+			end)
+
+			rainstormSound = Instance.new('Sound')
+			rainstormSound.Name = 'VapeRainstormThunder'
+			rainstormSound.SoundId = 'rbxassetid://138186576'
+			rainstormSound.Volume = 0.45
+			rainstormSound.Parent = game:GetService('SoundService')
+			local sound = rainstormSound
+			task.spawn(function()
+				while rainstormActive and rainstormSound == sound do
+					task.wait(math.random(18, 32))
+					if rainstormActive and rainstormSound == sound then
+						sound.PlaybackSpeed = math.random(85, 110) / 100
+						local success, err = pcall(function()
+							sound:Play()
+						end)
+						if not success then
+							vape:CreateNotification('Rainstorm', 'Thunder audio failed to play: '..tostring(err), 5, 'warning')
+							break
+						end
+					end
+				end
+			end)
+		else
+			if rainstormConnection then
+				rainstormConnection:Disconnect()
+				rainstormConnection = nil
+			end
+			if rainstormGui then
+				rainstormGui:Destroy()
+				rainstormGui = nil
+			end
+			if rainstormSound then
+				rainstormSound:Stop()
+				rainstormSound:Destroy()
+				rainstormSound = nil
+			end
+		end
+	end
 	
 	local function applyFlags(data)
 		if type(data) ~= 'table' then
-			vape:CreateNotification('FFlag Editor', 'JSON must contain an object of flag names and values.', 5, 'alert')
+			vape:CreateNotification('Rainstorm', 'JSON must contain an object of flag names and values.', 5, 'alert')
 			return
 		end
 		
@@ -7199,11 +7311,15 @@ run(function()
 		local rejected = {}
 		for key, value in pairs(data) do
 			if type(key) ~= 'string' then
-				vape:CreateNotification('FFlag Editor', 'JSON keys must be strings.', 5, 'alert')
+				vape:CreateNotification('Rainstorm', 'JSON keys must be strings.', 5, 'alert')
 				return
 			end
 			if key:lower():gsub('[%s_%-]', '') == 'greysky' then
 				setGreySky(value == true or tostring(value):lower() == 'true' or value == 1)
+				count += 1
+				continue
+			elseif key:lower():gsub('[%s_%-]', '') == 'rainstorm' then
+				setRainstorm(value == true or tostring(value):lower() == 'true' or value == 1)
 				count += 1
 				continue
 			end
@@ -7238,7 +7354,7 @@ run(function()
 		end
 
 		if #rejected > 0 then
-			vape:CreateNotification('FFlag Editor', 'Unsupported FFlags: '..table.concat(rejected, ', '), 8, 'warning')
+			vape:CreateNotification('Rainstorm', 'Unsupported FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
 		return count
 	end
@@ -7252,45 +7368,46 @@ run(function()
 			end
 		end
 		if #rejected > 0 then
-			vape:CreateNotification('FFlag Editor', 'Could not restore FFlags: '..table.concat(rejected, ', '), 8, 'warning')
+			vape:CreateNotification('Rainstorm', 'Could not restore FFlags: '..table.concat(rejected, ', '), 8, 'warning')
 		end
+		setRainstorm(false)
 		setGreySky(false)
 		applied = {}
 		captured = {}
 	end
 	
-	FFlagEditor = vape.Categories.Render:CreateModule({
-		Name = 'FFlag Editor',
+	RainstormModule = vape.Categories.Render:CreateModule({
+		Name = 'Rainstorm',
 		Function = function(callback)
 			if callback then
 				local success, data = pcall(function()
 					return decodeFlags()
 				end)
 				if not success then
-					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..tostring(data), 5, 'alert')
-					FFlagEditor:Toggle()
+					vape:CreateNotification('Rainstorm', 'Invalid JSON: '..tostring(data), 5, 'alert')
+					RainstormModule:Toggle()
 					return
 				end
 				if applyFlags(data) then
 					return
 				end
-				FFlagEditor:Toggle()
+				RainstormModule:Toggle()
 			else
 				restoreFlags()
 			end
 		end,
-		Tooltip = 'Apply and restore JSON-defined Roblox FFlags, including the built-in GreySky effect'
+		Tooltip = 'Apply Roblox FFlags or use the built-in Rainstorm and GreySky effects'
 	})
-	JSONBox = FFlagEditor:CreateTextBox({
+	JSONBox = RainstormModule:CreateTextBox({
 		Name = 'FFlags',
-		Placeholder = '{"FlagName":"value"}',
+		Placeholder = '{"Rainstorm":true}',
 		Function = function(enter)
-			if enter and FFlagEditor.Enabled then
+			if enter and RainstormModule.Enabled then
 				local success, data = pcall(function()
 					return decodeFlags()
 				end)
 				if not success then
-					vape:CreateNotification('FFlag Editor', 'Invalid JSON: '..tostring(data), 5, 'alert')
+					vape:CreateNotification('Rainstorm', 'Invalid JSON: '..tostring(data), 5, 'alert')
 					return
 				end
 				applyFlags(data)
