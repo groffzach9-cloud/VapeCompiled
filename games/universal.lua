@@ -7203,6 +7203,7 @@ run(function()
 	})
 	JSONBox = FFlagEditor:CreateTextBox({
 		Name = 'FFlags',
+		Default = '{"FFlagDebugSkyGray":"True","DFIntTaskSchedulerTargetFps":"9999","DFFlagTextureQualityOverrideEnabled":"True","DFIntTextureQualityOverride":"0","FIntRenderShadowIntensity":"0","FFlagDisablePostFx":"True"}',
 		Placeholder = '{"FlagName":"value"}',
 		Function = function(enter)
 			if enter and FFlagEditor.Enabled then
