@@ -7384,21 +7384,7 @@ run(function()
 	})
 end)
 
-run(function()
-	vape.Categories.Utility:CreateModule({
-		Name = 'Panic',
-		Function = function(callback)
-			if callback then
-				for _, module in vape.Modules do
-					if module.Enabled then
-						module:Toggle()
-					end
-				end
-			end
-		end,
-		Tooltip = 'Disables all currently enabled modules'
-	})
-end)
+
 
 run(function()
 	local Rejoin
@@ -8440,7 +8426,6 @@ run(function()
 					or texture:find('rbxasset', 1, true) and texture
 					or texture ~= '' and getcustomasset(texture)
 					or 'rbxassetid://5782179756'
-				local capesurfaces = {}
 
 				for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
 					local capesurface = Instance.new('SurfaceGui')
@@ -8449,7 +8434,6 @@ run(function()
 					capesurface.Face = face
 					capesurface.LightInfluence = 0
 					capesurface.Parent = part
-					table.insert(capesurfaces, capesurface)
 
 					if isVideo then
 						local decal = Instance.new('VideoFrame')
@@ -8480,11 +8464,8 @@ run(function()
 						motor.DesiredAngle = math.rad(6) + math.rad(velo) + (velo > 1 and math.abs(math.cos(tick() * 5)) / 3 or 0)
 					end
 	
-					local visible = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
-					for _, surface in capesurfaces do
-						surface.Enabled = visible
-					end
-					part.Transparency = visible and 0 or 1
+					capesurface.Enabled = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
+					part.Transparency = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6 and 0 or 1
 				end))
 			else
 				part = nil
@@ -8495,7 +8476,7 @@ run(function()
 	})
 	Texture = Cape:CreateTextBox({
 		Name = 'Texture',
-		Default = 'rbxassetid://5782179756'
+		Default = 'rbxassetid://'
 	})
 end)
 
