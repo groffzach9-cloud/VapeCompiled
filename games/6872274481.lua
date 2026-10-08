@@ -8495,7 +8495,7 @@ run(function()
 
 	local function nextOpen(info, blade)
 		local cooldown = getWeaponAttackSpeed(blade, info) * furyMultiplier()
-		local hitInterval = cooldown / SwingTimeSlider.Value
+		local hitInterval = cooldown * SwingTimeSlider.Value
 		strike.cooldown = cooldown
 		strike.interval = math.max(hitInterval * (strike.minr + 0.008) - strike.frame * 0.5, hitInterval * strike.minr)
 		local sc = bedwars.SwordController
@@ -8830,13 +8830,13 @@ run(function()
 		end
 	})
 	SwingTimeSlider = Killaura:CreateSlider({
-		Name = 'hit speed',
+		Name = 'hit interval',
 		Min = 0.5,
 		Max = 1.5,
-		Default = 1,
+		Default = 0.5,
 		Decimal = 10,
 		Suffix = 'x',
-		Tooltip = 'Scales how quickly Killaura requests hits'
+		Tooltip = 'Scales the attack interval; lower values request hits faster'
 	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'max angle',
