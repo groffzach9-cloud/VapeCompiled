@@ -291,24 +291,15 @@ entitylib.addEntity = function(char, plr, teamfunc, spawntime)
 				table.insert(entitylib.List, entity)
 				entitylib.Events.EntityAdded:Fire(entity)
 			end
-			--[[table.insert(entity.Connections, char.ChildRemoved:Connect(function(part)
+			table.insert(entity.Connections, char.ChildRemoved:Connect(function(part)
 				if (part == humrootpart or part == hum or part == head) then
-					local found = char:FindFirstChild(part.Name)
-					if found then
-						if part == humrootpart then
-							entity.HumanoidRootPart = found
-							entity.RootPart = found
-							humrootpart = found
-							return
-						elseif part == head then
-							entity.Head = found
-							head = found
-							return
-						end
-					end
-					entitylib.removeEntity(char, plr == lplr)
+					task.defer(function()
+						if entitylib.getEntity(char) ~= entity then return end
+						entitylib.removeEntity(char, plr == lplr)
+						entitylib.addEntity(char, plr, teamfunc, entity.SpawnTime)
+					end)
 				end
-			end))]]
+			end))
 		end
 
 		entitylib.EntityThreads[char] = nil
