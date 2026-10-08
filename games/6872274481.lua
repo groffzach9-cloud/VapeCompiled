@@ -9287,6 +9287,8 @@ run(function()
 		Gloops.Object.Visible = on
 		Fireball.Object.Visible = on
 	end)
+end)
+
 run(function()
 	local ProjectileAura
 	local Targets
