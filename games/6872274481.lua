@@ -8571,7 +8571,7 @@ run(function()
 					startAutoShootLoop()
 				end
 
-				if Animation.Enabled and not (identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1])) then
+				if Animation.Enabled then
 					swapViewmodel(true)
 					task.spawn(function()
 						local going = false

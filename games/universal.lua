@@ -2683,6 +2683,7 @@ run(function()
 	local Face
 	local Overlay = OverlapParams.new()
 	Overlay.FilterType = Enum.RaycastFilterType.Include
+	local touchInterest = firetouchinterest
 	local Particles, Boxes, AttackDelay = {}, {}, os.clock()
 	
 	local function getAttackData()
@@ -2698,11 +2699,15 @@ run(function()
 		Name = 'Killaura',
 		Function = function(callback)
 			if callback then
+				if type(touchInterest) ~= 'function' then
+					notif('Killaura', 'executor does not support firetouchinterest; using tool activation only', 5, 'warning')
+				end
+
 				repeat
 					local interest, tool = getAttackData()
 					local attacked = {}
 	
-					if interest then
+					if tool then
 						local entities = entitylib.AllPosition({
 							Range = SwingRange.Value,
 							Wallcheck = Targets.Walls.Enabled or nil,
@@ -2742,10 +2747,12 @@ run(function()
 									continue
 								end
 	
-								Overlay.FilterDescendantsInstances = {entity.Character}
-								for _, part in workspace:GetPartBoundsInBox(entity.RootPart.CFrame, Vector3.new(4, 4, 4), Overlay) do
-									firetouchinterest(interest.Parent, part, 1)
-									firetouchinterest(interest.Parent, part, 0)
+								if interest and type(touchInterest) == 'function' then
+									Overlay.FilterDescendantsInstances = {entity.Character}
+									for _, part in workspace:GetPartBoundsInBox(entity.RootPart.CFrame, Vector3.new(4, 4, 4), Overlay) do
+										touchInterest(interest.Parent, part, 1)
+										touchInterest(interest.Parent, part, 0)
+									end
 								end
 							end
 						end
