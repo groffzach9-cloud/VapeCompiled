@@ -599,8 +599,28 @@ run(function()
 					entitylib.Events.EntityAdded:Fire(entity)
 				end
 
+				local function updateNpcRoot()
+					if plr or entitylib.getEntity(char) ~= entity then return end
+					local root = char.PrimaryPart
+					if root and root ~= humrootpart then
+						humrootpart = root
+						entity.RootPart = root
+						entity.HumanoidRootPart = root
+						entity.Head = root
+						entitylib.Events.EntityUpdated:Fire(entity)
+					end
+				end
+
+				if not plr then
+					table.insert(entity.Connections, char:GetPropertyChangedSignal('PrimaryPart'):Connect(updateNpcRoot))
+				end
+
 				table.insert(entity.Connections, char.ChildRemoved:Connect(function(part)
 					if part == humrootpart or part == hum or part == head then
+						if not plr then
+							task.defer(updateNpcRoot)
+							return
+						end
 						if part == humrootpart and hum.RootPart then
 							humrootpart = hum.RootPart
 							entity.RootPart = hum.RootPart
