@@ -6711,6 +6711,9 @@ run(function()
 	local FastHitsAutoCharge
 	local ArrowCharge
 	local AttackRemote
+	local autoShootLoop
+	local ProjectileDelay = {}
+	local fhUsageIndex = 1
 	local lastAttackTime = 0
 	local lastTargetTime = 0
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
