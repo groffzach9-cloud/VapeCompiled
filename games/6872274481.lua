@@ -8350,16 +8350,6 @@ run(function()
 	local SparkTexture, SparkStart, SparkEnd, SparkSize
 	local swingSaved, scytheSaved
 
-	local budget = {tokens = 4, stamp = os.clock()}
-	local function spendToken()
-		local now = os.clock()
-		budget.tokens = math.min(budget.tokens + (now - budget.stamp) * 4.5, 4)
-		budget.stamp = now
-		if budget.tokens < 1 then return false end
-		budget.tokens -= 1
-		return true
-	end
-
 	local strike = {nextAt = 0, interval = nil, cooldown = 0.3, lastSrv = 0, used = 0, frame = 1 / 60, minr = 0.982, log = {}, good = 0, total = 0, since = 0}
 	local probe = {buf = {}, stats = {}, nextFlush = 0, started = os.clock(), sendTimes = {}, lastLand = nil}
 
@@ -8686,7 +8676,7 @@ run(function()
 								if body then
 									local openAt, cooldown = nextOpen(info, blade)
 									kaPeriod = cooldown
-									if os.clock() >= openAt and swingReady(cooldown) and spendToken() then
+									if os.clock() >= openAt and swingReady(cooldown) then
 										local selfChar = lplr.Character
 										local targetChar = foe.Character
 										local selfRoot = selfChar and selfChar.PrimaryPart
