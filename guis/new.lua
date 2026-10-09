@@ -911,6 +911,9 @@ function vape:LoadGUI()
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
+	vape.Categories.Main:CreateDivider({
+		Text = 'kits'
+	})
 	
 	--[[
 		Friends
