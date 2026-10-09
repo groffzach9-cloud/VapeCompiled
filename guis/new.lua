@@ -912,10 +912,7 @@ function vape:LoadGUI()
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
-	vape.Categories.Minigames = vape.Categories.Kits
-	vape.Categories.Main:CreateDivider({
-		Text = 'misc'
-	})
+
 	--[[
 		Friends
 	]]
