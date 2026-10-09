@@ -903,9 +903,6 @@ function vape:LoadGUI()
 		Icon = getvapeasset('newvape/assets/new/world.png'),
 		Size = UDim2.fromOffset(14, 14)
 	})
-	vape.Categories.Main:CreateDivider({
-		Text = 'kits'
-	})
 	vape:CreateCategory({
 		Name = 'Inventory',
 		Icon = getvapeasset('newvape/assets/new/inventory.png'),
