@@ -27813,3 +27813,29 @@ run(function()
         end
     })
 end)
+run(function()
+	local SetFPS
+	local FPS
+	
+	SetFPS = vape.Categories.Utility:CreateModule({
+		Name = "SetFPS",
+		Function = function(callback)
+			if callback then
+				setfpscap(FPS.Value)
+			else
+				setfpscap(240)
+			end
+		end,
+		Tooltip = "Removes or customizes the Frame-Per-Second limit",
+	})
+	
+	FPS = SetFPS:CreateSlider({
+		Name = "Frames Per Second",
+		Min = 0,
+		Max = 420,
+		Default = 240,
+		Function = function(value)
+			setfpscap(value)
+		end
+	})
+end)
