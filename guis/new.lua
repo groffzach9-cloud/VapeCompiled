@@ -915,7 +915,7 @@ function vape:LoadGUI()
     Name = 'Kits',
     Icon = getcustomasset('newvape/assets/new/combaticon.png'),
     Size = UDim2.fromOffset(13, 14)
-})
+	})
 	--[[
 		Friends
 	]]
