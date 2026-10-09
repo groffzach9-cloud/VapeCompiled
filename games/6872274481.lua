@@ -2913,7 +2913,7 @@ run(function()
         end)
     end
     
-    ShopAutoClicker = vape.Categories.Combat:CreateModule({
+    ShopAutoClicker = vape.Categories.Utility:CreateModule({
         Name = 'ShopAutoClicker',
         Tooltip = 'hold on a shop item to buy - idea from seven (cv)',
         Function = function(callback)
@@ -25966,7 +25966,7 @@ run(function()
 		task.wait(FakeLagSpeed5.Value / 10)
 		entitylib.character.Humanoid.WalkSpeed = FakeLagSpeed3.Value
 	end
-	FakeLag = vape.Categories.Combat:CreateModule({
+	FakeLag = vape.Categories.Utility:CreateModule({
 		Name = "FakeLag",
         Tooltip = "Makes people think you're laggy",
 		Function = function(callback)
