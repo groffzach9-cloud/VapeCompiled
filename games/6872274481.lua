@@ -26286,12 +26286,7 @@ run(function()
 
     local skies = {
         ["orange"] = {
-            SkyboxLf = "rbxassetid://18359130164",
-            SkyboxRt = "rbxassetid://18359130164",
-            SkyboxDn = "rbxassetid://18359130164",
-            SkyboxFt = "rbxassetid://18359130164",
-            SkyboxUp = "rbxassetid://18359130164",
-            SkyboxBk = "rbxassetid://18359130164"
+            AssetId = "rbxassetid://18359130164"
         },
 
         ["E-Girl Sky"] = {
@@ -26314,14 +26309,56 @@ run(function()
     }
 
     local function applySky(name)
+        local skyData = skies[name]
+        if not skyData then
+            vape:CreateNotification("Skyboxes", "Unknown skybox: "..tostring(name), 5, "warning")
+            return
+        end
+
+        if skyData.AssetId then
+            local success, objects = pcall(game.GetObjects, game, skyData.AssetId)
+            if not success or type(objects) ~= "table" then
+                vape:CreateNotification("Skyboxes", "Failed to load the Orange skybox asset.", 5, "warning")
+                return
+            end
+
+            local sourceSky
+            for _, object in objects do
+                if object:IsA("Sky") then
+                    sourceSky = object
+                    break
+                end
+                sourceSky = object:FindFirstChildWhichIsA("Sky", true)
+                if sourceSky then break end
+            end
+
+            if not sourceSky then
+                for _, object in objects do
+                    object:Destroy()
+                end
+                vape:CreateNotification("Skyboxes", "Orange asset does not contain a Sky object.", 5, "warning")
+                return
+            end
+
+            local faceProperties = {"SkyboxBk", "SkyboxDn", "SkyboxFt", "SkyboxLf", "SkyboxRt", "SkyboxUp"}
+            for _, prop in faceProperties do
+                skyData[prop] = sourceSky[prop]
+            end
+            for _, object in objects do
+                object:Destroy()
+            end
+        end
+
         local sky = lighting:FindFirstChildOfClass("Sky")
         if not sky then
             sky = Instance.new("Sky")
             sky.Parent = lighting
         end
 
-        for prop, id in pairs(skies[name]) do
-            sky[prop] = id
+        for prop, value in pairs(skyData) do
+            if prop ~= "AssetId" then
+                sky[prop] = value
+            end
         end
     end
 
@@ -26349,7 +26386,7 @@ run(function()
     SkyboxList = Skyboxes:CreateDropdown({
         Name = "Skybox",
         List = {"orange", "E-Girl Sky", "Xylex Sky"},
-        Default = "Floppa Sky",
+        Default = "orange",
         Function = function(val)
             if Skyboxes.Enabled then
                 applySky(val)
