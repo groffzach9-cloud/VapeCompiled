@@ -26286,12 +26286,12 @@ run(function()
 
     local skies = {
         ["Floppa Sky"] = {
-            SkyboxLf = "rbxassetid://9432874158",
-            SkyboxRt = "rbxassetid://10807046245",
-            SkyboxDn = "rbxassetid://6960941710",
-            SkyboxFt = "rbxassetid://5183588645",
-            SkyboxUp = "rbxassetid://6999991800",
-            SkyboxBk = "rbxassetid://9902060107"
+            SkyboxLf = "rbxassetid://18359130164",
+            SkyboxRt = "rbxassetid://18359130164",
+            SkyboxDn = "rbxassetid://18359130164",
+            SkyboxFt = "rbxassetid://18359130164",
+            SkyboxUp = "rbxassetid://18359130164",
+            SkyboxBk = "rbxassetid://18359130164"
         },
 
         ["E-Girl Sky"] = {
@@ -26348,7 +26348,7 @@ run(function()
 
     SkyboxList = Skyboxes:CreateDropdown({
         Name = "Skybox",
-        List = {"Floppa Sky", "E-Girl Sky", "Xylex Sky"},
+        List = {"orange", "E-Girl Sky", "Xylex Sky"},
         Default = "Floppa Sky",
         Function = function(val)
             if Skyboxes.Enabled then
@@ -27635,8 +27635,8 @@ run(function()
 
     local DEFAULT_SPEED = 23
     local WIND_SPEED = 40
-    local BOOST_SPEED = 35
-    local SKATE_SPEED = 35
+    local BOOST_SPEED = 40
+    local SKATE_SPEED = 20
 
     local currentMode = "default"
     local lastCheck = 0
