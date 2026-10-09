@@ -131,6 +131,7 @@ do
 		['newvape/assets/new/closemini.png'] = 'rbxassetid://108320409341289',
 		['newvape/assets/new/closetiny.png'] = 'rbxassetid://71393233149714',
 		['newvape/assets/new/colorpreview.png'] = 'rbxassetid://140438628568318',
+		['newvape/assets/new/combaticon.png'] = 'rbxasset://combaticon.png',
 		['newvape/assets/new/combat.png'] = 'rbxassetid://94762732349053',
 		['newvape/assets/new/customtheme.png'] = 'rbxassetid://91756736022800',
 		['newvape/assets/new/discord.png'] = 'rbxassetid://99871463341003',
@@ -912,9 +913,9 @@ function vape:LoadGUI()
 		Text = 'misc'
 	})
 	mainapi:CreateCategory({
-    Name = 'Kits',
-    Icon = getcustomasset('newvape/assets/new/combaticon.png'),
-    Size = UDim2.fromOffset(13, 14)
+		Name = 'Kits',
+		Icon = getvapeasset('newvape/assets/new/combaticon.png'),
+		Size = UDim2.fromOffset(13, 14)
 	})
 	--[[
 		Friends
