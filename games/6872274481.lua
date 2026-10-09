@@ -2639,7 +2639,7 @@ run(function()
         end
     end
 
-    HitBoxes = vape.Categories.Combat:CreateModule({
+    HitBoxes = vape.Categories.Utility:CreateModule({
         Name = 'HitBoxes',
         Function = function(callback)
             if callback then
