@@ -28212,6 +28212,11 @@ run(function()
 		Name = 'YuziDasher',
 		Function = function(callback)
 			if callback then
+				YuziDasher:Clean(YuziDasher.Bind.Triggered:Connect(function(isDown)
+					if isDown then
+						PerformDash()
+					end
+				end))
 				YuziDasher:Clean(inputService.InputBegan:Connect(function(input, gameProcessed)
 					if gameProcessed then return end
 					if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CurrentKeybind then
