@@ -26285,7 +26285,7 @@ run(function()
     end
 
     local skies = {
-        ["Floppa Sky"] = {
+        ["orange"] = {
             SkyboxLf = "rbxassetid://18359130164",
             SkyboxRt = "rbxassetid://18359130164",
             SkyboxDn = "rbxassetid://18359130164",
