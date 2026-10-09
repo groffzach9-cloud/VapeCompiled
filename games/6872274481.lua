@@ -5597,6 +5597,7 @@ run(function()
             return val == 1 and 'stud' or 'studs'
         end
     })
+    _G.FlyValue = Value
     VerticalValue = Fly:CreateSlider({
         Name = 'Vertical Speed',
         Min = 1,
@@ -9540,6 +9541,7 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
+	_G.SpeedValue = Value
 	WallCheck = Speed:CreateToggle({
 		Name = 'Wall Check',
 		Default = true
@@ -27713,13 +27715,10 @@ run(function()
                     if tick() - lastCheck < 0.5 then return end
                     lastCheck = tick()
 
-                    local statusScreen = lplr.PlayerGui:FindFirstChild("StatusEffectHudScreen")
-                    local hud = statusScreen and statusScreen:FindFirstChild("StatusEffectHud")
-                    if not hud then return end
-
-                    local wind = hud:FindFirstChild("WindWalkerEffect")
-                    local boost = hud:FindFirstChild("Speed Boost")
-                    local skate = hud:FindFirstChild("High Speed Skating")
+                    local playerGui = lplr:FindFirstChildOfClass("PlayerGui")
+                    local wind = playerGui and playerGui:FindFirstChild("WindWalkerEffect", true)
+                    local boost = playerGui and playerGui:FindFirstChild("Speed Boost", true)
+                    local skate = playerGui and playerGui:FindFirstChild("High Speed Skating", true)
 
                     -- 🛼 High Speed Skating (highest priority)
                     if skate and skate.Visible ~= false then
@@ -27740,13 +27739,13 @@ run(function()
                     end
 
                     -- 🌪 WindWalker stacks
-                    local stack = wind and wind:FindFirstChild("EffectStack")
-                    if stack and stack:IsA("TextLabel") then
+                    local stack = wind and wind:FindFirstChild("EffectStack", true)
+                    if stack and (stack:IsA("TextLabel") or stack:IsA("TextButton")) then
                         local num = tonumber(stack.Text)
-                        if num and num >= 1 and num <= 5 then
+                        if num and num >= 1 then
                             if currentMode ~= "wind" then
                                 currentMode = "wind"
-                                setSpeed(42)
+                                setSpeed(WIND_SPEED)
                             end
                             return
                         end
