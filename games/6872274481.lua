@@ -24798,37 +24798,7 @@ run(function()
 	})
 end)
 
-run(function()
-	local Hitfix 
 
-    HitFix = vape.Categories.Utility:CreateModule({
-        Name = 'HitFix',
-        Function = function(callback)
-            local func = bedwars.SwordController.swingSwordAtMouse
-            if not func then return end
-            local foundIndex = nil
-            pcall(function()
-                for i = 1, 50 do
-                    local constant = debug.getconstant(func, i)
-                    if constant == 'Raycast' or constant == 'raycast' then
-                        foundIndex = i
-                        break
-                    end
-                end
-            end)
-            
-            if foundIndex then
-                pcall(function()
-                    debug.setconstant(func, foundIndex, callback and 'raycast' or 'Raycast')
-                end)
-            end
-            
-            pcall(function()
-                debug.setupvalue(func, 4, callback and bedwars.QueryUtil or workspace)
-            end)
-        end,
-    })
-end)
 
 run(function()
 	local Interface
@@ -27664,7 +27634,7 @@ run(function()
     local Disabler
 
     local DEFAULT_SPEED = 23
-    local WIND_SPEED = 45
+    local WIND_SPEED = 35
     local BOOST_SPEED = 35
     local SKATE_SPEED = 35
 
@@ -27705,7 +27675,7 @@ run(function()
     end
 
     Disabler = vape.Categories.Blatant:CreateModule({
-        Name = "Disabler",
+        Name = "semi Disabler",
         Function = function(callback)
             if callback then
                 cleanupDisabler()
@@ -27838,4 +27808,86 @@ run(function()
 			setfpscap(value)
 		end
 	})
+end)
+local role = "owner"
+run(function()
+    local HitFix
+	local PingBased
+	local Options
+    HitFix = vape.Categories.Blatant:CreateModule({
+        Name = 'HitFix',
+        Function = function(callback)
+            if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium" then
+                vape:CreateNotification("Onyx", "You don’t have access to this.", 10, "alert")
+                return
+            end  
+
+            local function getPing()
+                local stats = game:GetService("Stats")
+                local ping = stats.Network.ServerStatsItem["Data Ping"]:GetValueString()
+                return tonumber(ping:match("%d+")) or 50
+            end
+
+            local function getDelay()
+                local ping = getPing()
+
+                if PingBased.Enabled then
+                    if Options.Value == "Blatant" then
+                        return math.clamp(0.08 + (ping / 1000), 0.08, 0.14)
+                    else
+                        return math.clamp(0.11 + (ping / 1200), 0.11, 0.15)
+                    end
+                end
+
+                return Options.Value == "Blatant" and 0.1 or 0.13
+            end
+
+            if callback then
+                pcall(function()
+                    if bedwars.SwordController and bedwars.SwordController.swingSwordAtMouse then
+                        local func = bedwars.SwordController.swingSwordAtMouse
+
+                        if Options.Value == "Blatant" then
+                            debug.setconstant(func, 23, "raycast")
+                            debug.setupvalue(func, 4, bedwars.QueryUtil)
+                        end
+
+                        for i, v in ipairs(debug.getconstants(func)) do
+                            if typeof(v) == "number" and (v == 28) then
+                                debug.setconstant(func, i, getDelay())
+                            end
+                        end
+                    end
+                end)
+            else
+                pcall(function()
+                    if bedwars.SwordController and bedwars.SwordController.swingSwordAtMouse then
+                        local func = bedwars.SwordController.swingSwordAtMouse
+
+                        debug.setconstant(func, 23, "Raycast")
+                        debug.setupvalue(func, 4, workspace)
+
+                        for i, v in ipairs(debug.getconstants(func)) do
+                            if typeof(v) == "number" then
+                                if v < 0.15 then
+                                    debug.setconstant(func, i, 0.15)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end,
+        Tooltip = 'Improves hit registration and decreases the chances of a ghost hit'
+    })
+
+    Options = HitFix:CreateDropdown({
+        Name = "Mode",
+        List = {"Blatant", "Legit"},
+    })
+
+    PingBased = HitFix:CreateToggle({
+        Name = "Ping Based",
+        Default = false,
+    })
 end)
