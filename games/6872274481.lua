@@ -27910,7 +27910,7 @@ run(function()
 		motor.Parent = part
 	end
 	
-	Cape = vape.Categories.Legit:CreateModule({
+	Cape = vape.Categories.Render:CreateModule({
 		Name = 'Cape',
 		Function = function(callback)
 			if callback then
@@ -27977,7 +27977,7 @@ run(function()
 	local Color
 	local hat
 	
-	ChinaHat = vape.Categories.Legit:CreateModule({
+	ChinaHat = vape.Categories.Render:CreateModule({
 		Name = 'ChinaHat',
 		Function = function(callback)
 			if callback then
