@@ -27734,7 +27734,7 @@ run(function()
                     -- 🔄 Reset
                     if currentMode ~= "default" then
                         currentMode = "default"
-                        setSpeed(DEFAULT_SPEED)
+                        setSpeed(23)
                     end
                 end)
 
