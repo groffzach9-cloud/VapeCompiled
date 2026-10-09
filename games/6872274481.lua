@@ -27725,7 +27725,7 @@ run(function()
                         if num and num >= 1 and num <= 5 then
                             if currentMode ~= "wind" then
                                 currentMode = "wind"
-                                setSpeed(WIND_SPEED)
+                                setSpeed(30)
                             end
                             return
                         end
