@@ -909,10 +909,11 @@ function vape:LoadGUI()
 		Icon = getvapeasset('newvape/assets/new/inventory.png'),
 		Size = UDim2.fromOffset(15, 14)
 	})
-	vape.Categories.Main:CreateDivider({
-		Text = 'misc'
+	vape:CreateCategory({
+		Name = 'Kits',
+		Icon = getvapeasset('newvape/assets/new/combaticon.png'),
+		Size = UDim2.fromOffset(13, 14)
 	})
-	
 	--[[
 		Friends
 	]]
