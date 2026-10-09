@@ -912,11 +912,7 @@ function vape:LoadGUI()
 	vape.Categories.Main:CreateDivider({
 		Text = 'misc'
 	})
-	mainapi:CreateCategory({
-		Name = 'Kits',
-		Icon = getvapeasset('newvape/assets/new/combaticon.png'),
-		Size = UDim2.fromOffset(13, 14)
-	})
+	
 	--[[
 		Friends
 	]]
