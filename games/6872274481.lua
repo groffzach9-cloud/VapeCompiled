@@ -6738,6 +6738,10 @@ run(function()
 	local glueRemote = {InvokeServer = function() end}
 	local projectileRemote = {InvokeServer = function() end}
 	local frostyGunRemote = {FireServer = function() end}
+	local function silasIFrameEnabled()
+		local module = vape.Modules['Silas I-Frame']
+		return module and module.Enabled == true
+	end
 	local gloopTracker = {}
 	local kitWeaponList = {'frost_staff', 'ninja_chakram', 'mage_spellbook'}
 
@@ -6934,7 +6938,7 @@ run(function()
 				end
 			end
 
-			if tick() - (store.silasAbilityTime or 0) < 2.2 then return false end
+			if not silasIFrameEnabled() and tick() - (store.silasAbilityTime or 0) < 2.2 then return false end
 			if tick() - (store.terraStompTime or 0) < 0.7 then return false end
 			if tick() - (store.terraKickTime or 0) < 0.5 then return false end
 		end
@@ -8415,7 +8419,7 @@ run(function()
 					if ok and res then return false, 'kit' end
 				end
 			end
-			if tick() - (store.silasAbilityTime or 0) < 2.2 then return false, 'kit' end
+			if not silasIFrameEnabled() and tick() - (store.silasAbilityTime or 0) < 2.2 then return false, 'kit' end
 			if tick() - (store.terraStompTime or 0) < 0.7 then return false, 'kit' end
 			if tick() - (store.terraKickTime or 0) < 0.5 then return false, 'kit' end
 		end
@@ -25106,8 +25110,8 @@ run(function()
     })
 end)
 run(function()
-	local SliasIFRame
-	SliasIFRame = vape.Categories.Utility:CreateModule({
+	local SilasIFrame
+	SilasIFrame = vape.Categories.Kits:CreateModule({
 		Name = "Silas I-Frame",
 		Tooltip = 'allows you to swing ur sword when using ability on silas',
 		Function = function(callback)
@@ -25116,9 +25120,11 @@ run(function()
 					vape:CreateNotification("Vape","Note, This disables swing state and allows sword swings while the attackable check is enabled.",12)
 				end
 				repeat
-					bedwars.SwordController.disableSwingState = false
+					if bedwars.SwordController then
+						bedwars.SwordController.disableSwingState = false
+					end
 					task.wait(0.03)
-				until not SliasIFRame.Enabled
+				until not SilasIFrame.Enabled
 			end
 		end
 	})
@@ -27461,7 +27467,7 @@ run(function()
 		abilityRemote = eventsFolder and eventsFolder:FindFirstChild("useAbility")
 	end)
 
-	AutoBerserker = vape.Categories.Utility:CreateModule({
+	AutoBerserker = vape.Categories.Kits:CreateModule({
 		Name = 'AutoBerserker',
 		Function = function(callback)
 			if callback then
