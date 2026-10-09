@@ -27682,10 +27682,31 @@ run(function()
         end
     end
 
+    local function cleanupDisabler()
+        if Disabler and Disabler.CheckLoop then
+            Disabler.CheckLoop:Disconnect()
+            Disabler.CheckLoop = nil
+        end
+
+        if Disabler and Disabler.MomentumLoop and task.cancel then
+            task.cancel(Disabler.MomentumLoop)
+            Disabler.MomentumLoop = nil
+        end
+
+        if Disabler and Disabler.DeathConn then
+            Disabler.DeathConn:Disconnect()
+            Disabler.DeathConn = nil
+        end
+
+        currentMode = "default"
+        setSpeed(DEFAULT_SPEED)
+    end
+
     Disabler = vape.Categories.Blatant:CreateModule({
         Name = "Disabler",
         Function = function(callback)
             if callback then
+                cleanupDisabler()
 
                 -- 🔁 Status checker (every 0.5s)
                 Disabler.CheckLoop = runService.Heartbeat:Connect(function()
@@ -27740,10 +27761,12 @@ run(function()
 
                 -- 💎 Krystal momentum spam
                 Disabler.MomentumLoop = task.spawn(function()
-                    while Disabler.Enabled do
-                        firesignal(ServerMomentumUpdate.OnClientEvent, {
-                            momentumIncrement = 9e9
-                        })
+                    while Disabler and Disabler.Enabled do
+                        if ServerMomentumUpdate and ServerMomentumUpdate.OnClientEvent then
+                            firesignal(ServerMomentumUpdate.OnClientEvent, {
+                                momentumIncrement = 9e9
+                            })
+                        end
                         task.wait(0.01)
                     end
                 end)
@@ -27756,15 +27779,38 @@ run(function()
                 end)
 
             else
-                if Disabler.CheckLoop then
-                    Disabler.CheckLoop:Disconnect()
-                    Disabler.CheckLoop = nil
-                end
-                currentMode = "default"
-                setSpeed(DEFAULT_SPEED)
+                cleanupDisabler()
             end
         end,
         ExtraText = function() return "Bedwars Developers" end,
         Tooltip = "Semi disables the ac with 3 different ways"
+    })
+end)
+run(function()
+	local LagbackNotifier
+	
+	LagbackNotifier = vape.Categories.Utility:CreateModule({
+        Name = 'LagbackNotifier',
+        Function = function(enabled)
+            if enabled then
+                local lastnetowner = true
+                LagbackNotifier:Clean(lplr:GetAttributeChangedSignal('LastTeleported'):Connect(function()
+                    vape:CreateNotification('LagbackNotifier', 'Teleport detected', 3)
+                end))
+                LagbackNotifier:Clean(runService.Heartbeat:Connect(function()
+                    local char = lplr.Character
+                    local hrp = char and char:FindFirstChild('HumanoidRootPart')
+
+                    if hrp then
+                        if lastnetowner ~= isnetworkowner(hrp) then
+                            lastnetowner = isnetworkowner(hrp)
+                            if not lastnetowner then
+                                vape:CreateNotification('LagbackNotifier', 'Lagback detected', 3)
+                            end
+                        end
+                    end
+                end))
+            end
+        end
     })
 end)
