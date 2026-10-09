@@ -25895,7 +25895,7 @@ run(function()
 		end;
 	})
 	HotbarHealthbarColorToggle = HotbarVisuals:CreateToggle({
-		["Name"] = 'Healthbar Color',
+		["Name"] = 'Custom Healthbar Color',
 		["Function"] = function(callback: boolean): void
 			if HotbarHealthbarColor.Object then HotbarHealthbarColor.Object.Visible = callback; end
 			updateHealthbarEffects()
