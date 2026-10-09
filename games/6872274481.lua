@@ -27658,3 +27658,113 @@ run(function()
     end})
 
 end)
+run(function()
+    local Disabler
+
+    local DEFAULT_SPEED = 23
+    local WIND_SPEED = 45
+    local BOOST_SPEED = 35
+    local SKATE_SPEED = 35
+
+    local currentMode = "default"
+    local lastCheck = 0
+
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local ServerMomentumUpdate =
+        ReplicatedStorage.rbxts_include.node_modules["@rbxts"].net.out._NetManaged.ServerMomentumUpdate
+
+    local function setSpeed(val)
+        if _G.SpeedValue then
+            _G.SpeedValue.Value = val
+        end
+        if _G.FlyValue then
+            _G.FlyValue.Value = val
+        end
+    end
+
+    Disabler = vape.Categories.Blatant:CreateModule({
+        Name = "Disabler",
+        Function = function(callback)
+            if callback then
+
+                -- 🔁 Status checker (every 0.5s)
+                Disabler.CheckLoop = runService.Heartbeat:Connect(function()
+                    if tick() - lastCheck < 0.5 then return end
+                    lastCheck = tick()
+
+                    local statusScreen = lplr.PlayerGui:FindFirstChild("StatusEffectHudScreen")
+                    local hud = statusScreen and statusScreen:FindFirstChild("StatusEffectHud")
+                    if not hud then return end
+
+                    local wind = hud:FindFirstChild("WindWalkerEffect")
+                    local boost = hud:FindFirstChild("Speed Boost")
+                    local skate = hud:FindFirstChild("High Speed Skating")
+
+                    -- 🛼 High Speed Skating (highest priority)
+                    if skate and skate.Visible ~= false then
+                        if currentMode ~= "skate" then
+                            currentMode = "skate"
+                            setSpeed(SKATE_SPEED)
+                        end
+                        return
+                    end
+
+                    -- ⚡ Speed Boost
+                    if boost and boost.Visible ~= false then
+                        if currentMode ~= "boost" then
+                            currentMode = "boost"
+                            setSpeed(BOOST_SPEED)
+                        end
+                        return
+                    end
+
+                    -- 🌪 WindWalker stacks
+                    local stack = wind and wind:FindFirstChild("EffectStack")
+                    if stack and stack:IsA("TextLabel") then
+                        local num = tonumber(stack.Text)
+                        if num and num >= 1 and num <= 5 then
+                            if currentMode ~= "wind" then
+                                currentMode = "wind"
+                                setSpeed(WIND_SPEED)
+                            end
+                            return
+                        end
+                    end
+
+                    -- 🔄 Reset
+                    if currentMode ~= "default" then
+                        currentMode = "default"
+                        setSpeed(DEFAULT_SPEED)
+                    end
+                end)
+
+                -- 💎 Krystal momentum spam
+                Disabler.MomentumLoop = task.spawn(function()
+                    while Disabler.Enabled do
+                        firesignal(ServerMomentumUpdate.OnClientEvent, {
+                            momentumIncrement = 9e9
+                        })
+                        task.wait(0.01)
+                    end
+                end)
+
+                -- ☠ Reset on respawn
+                Disabler.DeathConn = lplr.CharacterAdded:Connect(function()
+                    task.wait(0.1)
+                    currentMode = "default"
+                    setSpeed(DEFAULT_SPEED)
+                end)
+
+            else
+                if Disabler.CheckLoop then
+                    Disabler.CheckLoop:Disconnect()
+                    Disabler.CheckLoop = nil
+                end
+                currentMode = "default"
+                setSpeed(DEFAULT_SPEED)
+            end
+        end,
+        ExtraText = function() return "Bedwars Developers" end,
+        Tooltip = "Semi disables the ac with 3 different ways"
+    })
+end)
