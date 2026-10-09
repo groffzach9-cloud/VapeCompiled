@@ -27958,34 +27958,28 @@ run(function()
 				part.Massless = true
 				part.Transparency = 0
 				part.Material = Enum.Material.SmoothPlastic
-				part.Color = Color3.new(1, 1, 1)
+				part.Color = Color3.new()
 				part.CastShadow = false
 				part.Parent = gameCamera
-				local capesurfaces = {}
-				local isVideo = Texture.Value:find('.webm')
-				local texture = isVideo and getcustomasset(Texture.Value)
-					or (Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or assetfunction(Texture.Value)) or 'rbxassetid://65595622')
-				for _, face in {Enum.NormalId.Front, Enum.NormalId.Back} do
-					local capesurface = Instance.new('SurfaceGui')
-					capesurface.Face = face
-					capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-					capesurface.Adornee = part
-					capesurface.Parent = part
-					table.insert(capesurfaces, capesurface)
+				local capesurface = Instance.new('SurfaceGui')
+				capesurface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+				capesurface.Adornee = part
+				capesurface.Parent = part
 
-					local decal = Instance.new(isVideo and 'VideoFrame' or 'ImageLabel')
-					if isVideo then
-						decal.Video = texture
-						decal.Looped = true
-					else
-						decal.Image = texture
-					end
+				if Texture.Value:find('.webm') then
+					local decal = Instance.new('VideoFrame')
+					decal.Video = getcustomasset(Texture.Value)
+					decal.Size = UDim2.fromScale(1, 1)
+					decal.BackgroundTransparency = 1
+					decal.Looped = true
+					decal.Parent = capesurface
+					decal:Play()
+				else
+					local decal = Instance.new('ImageLabel')
+					decal.Image = Texture.Value ~= '' and (Texture.Value:find('rbxasset') and Texture.Value or assetfunction(Texture.Value)) or 'rbxassetid://65595622'
 					decal.Size = UDim2.fromScale(1, 1)
 					decal.BackgroundTransparency = 1
 					decal.Parent = capesurface
-					if isVideo then
-						decal:Play()
-					end
 				end
 				Cape:Clean(part)
 				Cape:Clean(entitylib.Events.LocalAdded:Connect(createMotor))
@@ -27998,11 +27992,8 @@ run(function()
 						local velo = math.min(entitylib.character.RootPart.Velocity.Magnitude, 90)
 						motor.DesiredAngle = math.rad(6) + math.rad(velo) + (velo > 1 and math.abs(math.cos(tick() * 5)) / 3 or 0)
 					end
-					local visible = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
-					for _, capesurface in capesurfaces do
-						capesurface.Enabled = visible
-					end
-					part.Transparency = visible and 0 or 1
+					capesurface.Enabled = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6
+					part.Transparency = (gameCamera.CFrame.Position - gameCamera.Focus.Position).Magnitude > 0.6 and 0 or 1
 					task.wait()
 				until not Cape.Enabled
 			else
