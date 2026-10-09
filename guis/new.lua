@@ -5901,6 +5901,15 @@ components = {
 			button.BackgroundColor3 = (isHover or modulechildren.Visible) and color.Light(uipallet.Main, 0.02) or uipallet.Main
 			dots.ImageColor3 = self.Enabled and Color3.fromRGB(50, 50, 50) or color.Light(uipallet.Main, 0.37)
 			component.Bind:SetColor(color.Dark(uipallet.Text, 0.43))
+
+			if self.Enabled then
+				self:Color(
+					vape.GUIColor.Hue,
+					vape.GUIColor.Sat,
+					vape.GUIColor.Value,
+					vape.GUIColor.Rainbow and vape.RainbowMode.Value ~= 'Retro'
+				)
+			end
 		
 			if not self.Enabled then
 				for _, v in self.Connections do
