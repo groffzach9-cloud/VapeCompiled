@@ -27597,7 +27597,7 @@ run(function()
     end
 
     Disabler = vape.Categories.Blatant:CreateModule({
-        Name = "semi Disabler",
+        Name = "Semi disabler",
         Function = function(callback)
             if callback then
                 cleanupDisabler()
