@@ -6948,13 +6948,8 @@ run(function()
 		end
 
 		local sword = store.hand
-		local fastHitting = fhBusySince > 0 or (tick() - (store._fhRestoreAt or 0)) < 0.6
-		if fastHitting and store.tools.sword and store.tools.sword.tool then
-			sword = store.tools.sword
-		else
-			if not sword or not sword.tool or not isMeleeWeapon(sword.tool.Name) then return false end
-			if sword.tool ~= getScreenTool() then return false end
-		end
+		if not sword or not sword.tool or not isMeleeWeapon(sword.tool.Name) then return false end
+		if sword.tool ~= getScreenTool() then return false end
 
 		local meta = bedwars.ItemMeta[sword.tool.Name]
 		if not meta then return false end
@@ -8423,9 +8418,6 @@ run(function()
 			if tick() - (store.terraStompTime or 0) < 0.7 then return false, 'kit' end
 			if tick() - (store.terraKickTime or 0) < 0.5 then return false, 'kit' end
 		end
-		if fastHitBlocksSword() then
-			return false, 'fasthits'
-		end
 		local blade = store.tools.sword
 		if not blade or not blade.tool then return false, 'nosword' end
 		local info = bedwars.ItemMeta[blade.tool.Name]
@@ -8572,9 +8564,6 @@ run(function()
 				end
 
 				setSwingBuffer(true)
-				if FastHits.Enabled then
-					startAutoShootLoop()
-				end
 
 				if Animation.Enabled then
 					swapViewmodel(true)
@@ -9167,120 +9156,6 @@ run(function()
 		Tooltip = 'stops ka when ur kit shouldnt be attacking',
 		Default = false
 	})
-
-	FastHits = Killaura:CreateToggle({
-		Name = 'fast hits',
-		Default = false,
-		Tooltip = 'shoots ur projectiles between sword hits so nothin ghosts',
-		Function = function(call)
-			if FastHitsAutoCharge then
-				FastHitsAutoCharge.Object.Visible = call
-			end
-
-			if ArrowCharge then
-				ArrowCharge.Object.Visible = call and FastHitsAutoCharge and FastHitsAutoCharge.Enabled
-			end
-
-			if LegitSwitch then
-				LegitSwitch.Object.Visible = call
-			end
-
-			if Kits then
-				Kits.Object.Visible = call
-			end
-
-			if Arrows then
-				Arrows.Object.Visible = call
-			end
-
-			if Gloops then
-				Gloops.Object.Visible = call
-			end
-
-			if Fireball then
-				Fireball.Object.Visible = call
-			end
-
-			if call then
-				if Killaura.Enabled then
-					startAutoShootLoop()
-				end
-			else
-				stopAutoShootLoop()
-			end
-		end
-	})
-
-	LegitSwitch = Killaura:CreateToggle({
-		Name = 'legit switch',
-		Darker = true,
-		Visible = false,
-		Tooltip = 'swaps to ur projectile, waits for it, shoots, then swaps back'
-	})
-
-	Kits = Killaura:CreateToggle({
-		Name = 'kits',
-		Darker = true,
-		Visible = false,
-		Tooltip = 'uses kit weapons too'
-	})
-
-	Arrows = Killaura:CreateToggle({
-		Name = 'arrows',
-		Default = true,
-		Darker = true,
-		Visible = false,
-		Tooltip = 'shoots arrows between hits'
-	})
-
-	Gloops = Killaura:CreateToggle({
-		Name = 'gloops',
-		Darker = true,
-		Visible = false,
-		Tooltip = 'throws gloop at who ur fightin'
-	})
-
-	Fireball = Killaura:CreateToggle({
-		Name = 'fireball',
-		Default = false,
-		Darker = true,
-		Visible = false,
-		Tooltip = 'automatically throws an fireball'
-	})
-
-	FastHitsAutoCharge = Killaura:CreateToggle({
-		Name = 'auto charge',
-		Default = true,
-		Darker = true,
-		Visible = false,
-		Function = function(v)
-			if ArrowCharge then
-				ArrowCharge.Object.Visible = FastHits.Enabled and v
-			end
-		end
-	})
-
-	ArrowCharge = Killaura:CreateSlider({
-		Name = 'charge rate',
-		Suffix = '%',
-		Min = 0,
-		Max = 100,
-		Default = 100,
-		Darker = true,
-		Visible = false
-	})
-
-	task.defer(function()
-		local on = FastHits.Enabled
-
-		FastHitsAutoCharge.Object.Visible = on
-		ArrowCharge.Object.Visible = on and FastHitsAutoCharge.Enabled
-		LegitSwitch.Object.Visible = on
-		Kits.Object.Visible = on
-		Arrows.Object.Visible = on
-		Gloops.Object.Visible = on
-		Fireball.Object.Visible = on
-	end)
 end)
 
 run(function()
