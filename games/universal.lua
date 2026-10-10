@@ -7233,7 +7233,7 @@ run(function()
 
 			rainstormBloom = Instance.new('BloomEffect')
 			rainstormBloom.Name = 'VapeRainstormBloom'
-			rainstormBloom.Intensity = 0.12
+			rainstormBloom.Intensity = 0.10
 			rainstormBloom.Size = 18
 			rainstormBloom.Threshold = 1.7
 			rainstormBloom.Parent = lightingService
