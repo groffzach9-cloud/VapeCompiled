@@ -7219,16 +7219,16 @@ run(function()
 				OutdoorAmbient = lightingService.OutdoorAmbient,
 				Brightness = lightingService.Brightness
 			}
-			lightingService.Ambient = Color3.fromRGB(42, 54, 68)
-			lightingService.OutdoorAmbient = Color3.fromRGB(88, 105, 120)
-			lightingService.Brightness = math.max(0.7, lightingService.Brightness * 0.75)
+			lightingService.Ambient = Color3.fromRGB(58, 70, 84)
+			lightingService.OutdoorAmbient = Color3.fromRGB(108, 124, 140)
+			lightingService.Brightness = math.max(0.85, lightingService.Brightness * 0.9)
 
 			rainstormColorCorrection = Instance.new('ColorCorrectionEffect')
 			rainstormColorCorrection.Name = 'VapeRainstormColor'
 			rainstormColorCorrection.TintColor = Color3.fromRGB(190, 210, 228)
 			rainstormColorCorrection.Saturation = -0.12
 			rainstormColorCorrection.Contrast = 0.12
-			rainstormColorCorrection.Brightness = -0.06
+			rainstormColorCorrection.Brightness = -0.02
 			rainstormColorCorrection.Parent = lightingService
 
 			rainstormBloom = Instance.new('BloomEffect')
