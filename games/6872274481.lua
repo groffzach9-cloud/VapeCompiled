@@ -8349,7 +8349,7 @@ run(function()
 	local SparkTexture, SparkStart, SparkEnd, SparkSize
 	local swingSaved, scytheSaved
 
-	local strike = {nextAt = 0, interval = nil, cooldown = 0.3, lastSrv = 0, used = 0, frame = 1 / 60, minr = 0.982, log = {}, good = 0, total = 0, since = 0}
+	local strike = {nextAt = 0, interval = nil, cooldown = 0.3, lastSrv = 0, used = 0, frame = 1 / 60, minr = 0.96, log = {}, good = 0, total = 0, since = 0}
 	local probe = {buf = {}, stats = {}, nextFlush = 0, started = os.clock(), sendTimes = {}, lastLand = nil}
 
 	local function probeLine(text)
@@ -8465,7 +8465,7 @@ run(function()
 		strike.since = 0
 		local rate = strike.good / strike.total
 		if rate >= 0.99 then
-			strike.minr = math.max(strike.minr - 0.001, 0.982)
+			strike.minr = math.max(strike.minr - 0.001, 0.96)
 		elseif rate < 0.85 then
 			strike.minr = math.min(strike.minr + 0.006, 1.03)
 		elseif rate < 0.97 then
@@ -9212,8 +9212,9 @@ run(function()
 						continue
 					end
 					
-					if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) > 0.5 then
-						local ent = entitylib.EntityPosition({
+					local fightingTarget = store.KillauraTarget
+					if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) > 0.5 or fightingTarget then
+						local ent = fightingTarget or entitylib.EntityPosition({
 							Part = 'RootPart',
 							Range = Range.Value,
 							Players = Targets.Players.Enabled,
@@ -9221,7 +9222,8 @@ run(function()
 							Wallcheck = Targets.Walls.Enabled
 						})
 	
-						if ent then
+						if ent and ent.RootPart and ent.Character and ent.Character.Parent
+							and (ent.RootPart.Position - entitylib.character.RootPart.Position).Magnitude <= Range.Value then
 							local pos = entitylib.character.RootPart.Position
 							for _, data in getProjectiles() do
 								local item, ammo, projectile, itemMeta = unpack(data)
