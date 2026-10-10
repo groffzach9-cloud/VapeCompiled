@@ -29141,7 +29141,7 @@ run(function()
 	end
 	
 	FPSBooster = vape.Categories.Render:CreateModule({
-		Name = 'FPSBooster',
+		Name = 'FPSBooster 2',
 		Function = function(callback)
 			if callback then
 				if Quality.Enabled then
