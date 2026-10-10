@@ -8464,10 +8464,12 @@ run(function()
 		if strike.total < 20 or strike.since < 4 then return end
 		strike.since = 0
 		local rate = strike.good / strike.total
-		if rate >= 0.97 then
-			strike.minr = math.max(strike.minr - 0.003, 0.982)
-		elseif rate < 0.8 then
+		if rate >= 0.99 then
+			strike.minr = math.max(strike.minr - 0.001, 0.982)
+		elseif rate < 0.85 then
 			strike.minr = math.min(strike.minr + 0.006, 1.03)
+		elseif rate < 0.97 then
+			strike.minr = math.min(strike.minr + 0.003, 1.03)
 		end
 		strike.good *= 0.5
 		strike.total *= 0.5
