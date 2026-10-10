@@ -29017,7 +29017,7 @@ run(function()
 		end)
 	end
 
-	AutoGrimReaper = vape.Categories.Kits:CreateModule({
+	AutoGrimReaper = vape.Categories.Utility:CreateModule({
 		Name = 'AutoGrimReaper',
 		Function = function(callback)
 			if callback then
