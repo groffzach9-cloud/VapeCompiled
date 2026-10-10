@@ -29606,7 +29606,7 @@ run(function()
 		return count
 	end
 	
-	RemoveNeon = vape.Categories.World:CreateModule({
+	RemoveNeon = vape.Categories.Kits:CreateModule({
 		Name = 'RemoveNeon',
 		Function = function(callback)
 			if callback then
@@ -29646,4 +29646,103 @@ run(function()
 			end
 		end,
 	})
+end)
+run(function()
+    local HellBladeSpam
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Workspace = game:GetService("Workspace")
+
+    local player = Players.LocalPlayer
+
+    local remote = ReplicatedStorage
+        :WaitForChild("rbxts_include")
+        :WaitForChild("node_modules")
+        :WaitForChild("@rbxts")
+        :WaitForChild("net")
+        :WaitForChild("out")
+        :WaitForChild("_NetManaged")
+        :WaitForChild("HellBladeRelease")
+
+    local function getWeapon()
+        return ReplicatedStorage
+            :WaitForChild("Inventories")
+            :WaitForChild(player.Name)
+            :FindFirstChild("infernal_saber")
+    end
+
+    local chargeTime = 67
+    local loopDelay = 0.1
+    local hideVFX = false
+
+    local mainThread = nil
+    local connection = nil
+
+    HellBladeSpam = vape.Categories.Blatant:CreateModule({
+        Name = "Instakill",
+        Tooltip = "Super sause",
+        Function = function(enabled)
+            if enabled then
+                -- 🔁 MAIN LOOP
+                mainThread = task.spawn(function()
+                    while HellBladeSpam.Enabled do
+                        local weapon = getWeapon()
+
+                        if weapon then
+                            remote:FireServer({
+                                chargeTime = chargeTime,
+                                player = player,
+                                weapon = weapon
+                            })
+                        end
+
+                        task.wait(loopDelay)
+                    end
+                end)
+
+
+                connection = Workspace.DescendantAdded:Connect(function(obj)
+                    if hideVFX and obj.Name == "InfernalSwordSpin" then
+                        obj:Destroy()
+                    end
+                end)
+
+            else
+                if connection then
+                    connection:Disconnect()
+                    connection = nil
+                end
+                mainThread = nil
+            end
+        end
+    })
+
+    HellBladeSpam:CreateSlider({
+        Name = "Charge Time",
+        Min = 0,
+        Max = 100,
+        Default = 67,
+        Function = function(val)
+            chargeTime = val
+        end
+    })
+
+    HellBladeSpam:CreateSlider({
+        Name = "Loop Delay",
+        Min = 0.001,
+        Max = 1,
+        Default = 0.1,
+        Decimal = 2,
+        Function = function(val)
+            loopDelay = val
+        end
+    })
+
+    HellBladeSpam:CreateToggle({
+        Name = "Hide VFX",
+        Default = false,
+        Function = function(val)
+            hideVFX = val
+        end
+    })
 end)
