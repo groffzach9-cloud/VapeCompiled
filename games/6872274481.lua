@@ -10797,7 +10797,7 @@ run(function()
 
 	NameBox = StreamerMode:CreateTextBox({
 		Name = 'name',
-		Default = 'motion is some ass gng',
+		Default = 'zenwear',
 		Placeholder = 'type a name...',
 		Function = reload
 	})
