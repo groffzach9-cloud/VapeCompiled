@@ -8451,4 +8451,3 @@ run(function()
 		List = WinEffectName
 	})
 end)
-warn('[vape-bedwars] 6: file end reached (all run blocks processed)')
